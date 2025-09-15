@@ -114,7 +114,7 @@ export function ChatInput({
 
           {/* Optional helper text */}
           <div className="mt-2 text-xs text-muted-foreground text-center">
-            Avai can make mistakes. Please use with discretion.
+            AVAI can make mistakes. Please use with discretion.
           </div>
         </form>
       </div>

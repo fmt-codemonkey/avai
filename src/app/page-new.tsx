@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { LeftSidebar } from "@/components/layout/LeftSidebar";
+import LeftSidebar from "@/components/layout/LeftSidebar";
 import { RightSidebar } from "@/components/layout/RightSidebar";
 import { ChatContainer, type Message } from "@/components/chat/ChatContainer";
 import { ProgressCard } from "@/components/security/ProgressCard";
