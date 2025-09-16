@@ -11,13 +11,15 @@ interface ChatInputProps {
   isLoading?: boolean;
   placeholder?: string;
   className?: string;
+  disabled?: boolean;
 }
 
 export function ChatInput({ 
   onSubmit, 
   isLoading = false, 
   placeholder = "Reply to Claude...",
-  className
+  className,
+  disabled = false
 }: ChatInputProps) {
   const [value, setValue] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -32,7 +34,7 @@ export function ChatInput({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (value.trim() && !isLoading) {
+    if (value.trim() && !isLoading && !disabled) {
       onSubmit?.(value.trim());
       setValue("");
     }
@@ -58,7 +60,7 @@ export function ChatInput({
                 variant="ghost"
                 size="sm"
                 className="h-8 w-8 p-0 hover:bg-muted/50"
-                disabled={isLoading}
+                disabled={isLoading || disabled}
               >
                 <Plus className="h-4 w-4" />
               </Button>
@@ -67,7 +69,7 @@ export function ChatInput({
                 variant="ghost"
                 size="sm"
                 className="h-8 w-8 p-0 hover:bg-muted/50"
-                disabled={isLoading}
+                disabled={isLoading || disabled}
               >
                 <Paperclip className="h-4 w-4" />
               </Button>
@@ -81,7 +83,7 @@ export function ChatInput({
                 onChange={(e) => setValue(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder={placeholder}
-                disabled={isLoading}
+                disabled={isLoading || disabled}
                 className={cn(
                   "min-h-[24px] max-h-[200px] resize-none border-0 bg-transparent p-0",
                   "focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/60",
@@ -96,7 +98,7 @@ export function ChatInput({
               <Button
                 type="submit"
                 size="sm"
-                disabled={!value.trim() || isLoading}
+                disabled={!value.trim() || isLoading || disabled}
                 className={cn(
                   "h-8 w-8 p-0 rounded-lg",
                   "bg-primary hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground",

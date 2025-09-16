@@ -38,6 +38,7 @@ import {
   useClerk
 } from '@clerk/nextjs';
 
+
 interface ChatHistoryItem {
   id: string;
   title: string;
@@ -588,3 +589,5 @@ export default function LeftSidebar({
     </div>
   );
 }
+
+

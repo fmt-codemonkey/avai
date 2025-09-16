@@ -6,8 +6,7 @@ import {
   Menu, 
   X, 
   Search,
-  Bell,
-  
+  Bell
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +17,7 @@ import {
   SignedOut,
   UserButton
 } from '@clerk/nextjs';
+
 
 interface HeaderProps {
   onMenuToggle?: () => void;
@@ -81,6 +81,8 @@ export function Header({ onMenuToggle, isSidebarOpen }: HeaderProps) {
           <Button variant="ghost" size="sm" className="md:hidden">
             <Search className="h-5 w-5" />
           </Button>
+
+
 
           {/* Notifications */}
           <Button variant="ghost" size="sm" className="relative">

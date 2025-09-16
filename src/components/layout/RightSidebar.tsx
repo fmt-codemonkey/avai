@@ -144,7 +144,7 @@ export function RightSidebar({
               "flex-1 px-3 py-2 text-sm font-medium rounded transition-all duration-200",
               activeTab === "overview" 
                 ? "bg-primary text-primary-foreground shadow-sm" 
-                : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                : "text-muted-foreground hover:text-foreground hover:bg-background/50 border border-border/30 dark:border-border/20"
             )}
           >
             Overview
@@ -155,7 +155,7 @@ export function RightSidebar({
               "flex-1 px-3 py-2 text-sm font-medium rounded transition-all duration-200",
               activeTab === "vulnerabilities"
                 ? "bg-primary text-primary-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                : "text-muted-foreground hover:text-foreground hover:bg-background/50 border border-border/30 dark:border-border/20"
             )}
           >
             Issues
@@ -166,7 +166,7 @@ export function RightSidebar({
               "flex-1 px-3 py-2 text-sm font-medium rounded transition-all duration-200",
               activeTab === "report"
                 ? "bg-primary text-primary-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                : "text-muted-foreground hover:text-foreground hover:bg-background/50 border border-border/30 dark:border-border/20"
             )}
           >
             Report

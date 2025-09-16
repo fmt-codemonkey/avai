@@ -18,6 +18,7 @@ export default function AVAISinglePage() {
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
 
   // Handle responsive behavior
   useEffect(() => {
@@ -123,63 +124,99 @@ export default function AVAISinglePage() {
     setMessages(prev => [...prev, userMessage]);
     setIsLoading(true);
 
+    // Detect if it's a GitHub URL
+    const isGitHubUrl = content.includes('github.com');
+    
     // Simulate AI response
     setTimeout(() => {
+      let responseContent: string;
+      
+      if (isGitHubUrl) {
+        const repoName = content.split('/').slice(-2).join('/').replace('.git', '');
+        responseContent = `� **Initializing Security Audit**\n\nRepository: ${repoName}\nStarting comprehensive security analysis...\n\n📋 **Audit Scope:**\n• Static code analysis\n• Dependency vulnerability scanning\n• Authentication & authorization review\n• Input validation assessment\n• Information disclosure checks\n• Cryptographic implementation review\n\n**Status:** Cloning repository and analyzing codebase structure...`;
+      } else {
+        responseContent = `I'll help you with your security question: "${content}"\n\nTo perform a comprehensive security audit, please provide:\n• Repository URL (GitHub, GitLab, etc.)\n• Specific security concerns\n• Technology stack details\n\nFor immediate analysis, you can share a GitHub repository URL and I'll scan it for vulnerabilities.`;
+      }
+
       const aiMessage: Message = {
         id: `ai-${Date.now()}`,
         sender: "ai", 
-        content: `🛡️ Starting security audit for: ${content}\n\nI'll analyze this repository for vulnerabilities and provide detailed findings with actionable recommendations.`,
+        content: responseContent,
         timestamp: new Date().toISOString(),
         type: "text"
       };
 
       setMessages(prev => [...prev, aiMessage]);
 
-      // Show progress after a delay
-      setTimeout(() => {
-        const progressMessage: Message = {
-          id: `progress-${Date.now()}`,
-          sender: "ai",
-          content: <ProgressCard {...mockProgress} />,
-          timestamp: new Date().toISOString(),
-          type: "progress"
-        };
-
-        setMessages(prev => [...prev, progressMessage]);
-
-        // Open right sidebar with results
-        setRightSidebarOpen(true);
-
-        // Show vulnerability after more delay
+      if (isGitHubUrl) {
+        // Show progress after a delay
         setTimeout(() => {
-          const vulnMessage: Message = {
-            id: `vuln-${Date.now()}`,
+          const progressMessage: Message = {
+            id: `progress-${Date.now()}`,
             sender: "ai",
-            content: <VulnerabilityCard {...mockVulnerability} />,
+            content: <ProgressCard {...mockProgress} />,
             timestamp: new Date().toISOString(),
-            type: "vulnerability"
+            type: "progress"
           };
 
-          setMessages(prev => [...prev, vulnMessage]);
-          setIsLoading(false);
-        }, 3000);
-      }, 2000);
-    }, 1000);
+          setMessages(prev => [...prev, progressMessage]);
+
+          // Open right sidebar with results
+          setRightSidebarOpen(true);
+
+          // Show vulnerability after more delay
+          setTimeout(() => {
+            const vulnMessage: Message = {
+              id: `vuln-${Date.now()}`,
+              sender: "ai",
+              content: <VulnerabilityCard {...mockVulnerability} />,
+              timestamp: new Date().toISOString(),
+              type: "vulnerability"
+            };
+
+            setMessages(prev => [...prev, vulnMessage]);
+            
+            // Final completion message
+            setTimeout(() => {
+              const completionMessage: Message = {
+                id: `completion-${Date.now()}`,
+                sender: "ai",
+                content: `✅ **Security Audit Complete**\n\n**Summary:**\n• 1 Critical vulnerability found\n• 2 Medium-risk issues identified  \n• 3 Low-priority recommendations\n• Overall security score: 78/100\n\n**Next Steps:**\n1. Address the SQL injection vulnerability immediately\n2. Review authentication implementation\n3. Update vulnerable dependencies\n4. Implement additional input validation\n\nDetailed findings are available in the security report panel. Would you like me to prioritize the fixes or explain any specific vulnerability?`,
+                timestamp: new Date().toISOString(),
+                type: "text"
+              };
+
+              setMessages(prev => [...prev, completionMessage]);
+              setIsLoading(false);
+            }, 2000);
+          }, 3000);
+        }, 2000);
+      } else {
+        setIsLoading(false);
+      }
+    }, 1500);
   };
 
   const handleNewChat = () => {
     setMessages([]);
     setCurrentChatId(null);
     setRightSidebarOpen(false);
+    setIsLoadingHistory(false);
   };
 
   const handleSelectChat = (chatId: string) => {
     setCurrentChatId(chatId);
+    setIsLoadingHistory(true);
     
     // Load mock chat data based on selected chat
     const mockChatData = getChatMessages(chatId);
     setMessages(mockChatData);
     setRightSidebarOpen(true);
+    
+    // Reset loading history flag after a brief delay to allow rendering
+    setTimeout(() => {
+      setIsLoadingHistory(false);
+    }, 100);
     
     // Close mobile menu if open
     if (isMobile) {
@@ -195,26 +232,30 @@ export default function AVAISinglePage() {
           {
             id: "1",
             sender: "user",
-            content: "Analyze my React webapp for security vulnerabilities",
-            timestamp: "2 hours ago",
+            content: "https://github.com/vercel/next.js",
+            timestamp: "2024-09-16T14:30:00Z",
+            type: "text"
           },
           {
             id: "2", 
             sender: "ai",
-            content: "I'll analyze your React webapp for security vulnerabilities. Let me scan your codebase...\n\n**Analysis Complete** ✅\n\nI found **4 security vulnerabilities** in your React application:\n\n1. **XSS Vulnerability** - Unescaped user input in components\n2. **Insecure Direct Object References** - Missing authorization checks\n3. **Sensitive Data Exposure** - API keys in client-side code\n4. **Cross-Site Request Forgery** - Missing CSRF protection\n\nWould you like me to provide detailed remediation steps for each vulnerability?",
-            timestamp: "2 hours ago",
+            content: "I'll analyze the Next.js repository for security vulnerabilities. This is a large codebase, so I'll focus on the most critical areas.\n\n🔍 **Repository Analysis Started**\n- Repository: vercel/next.js\n- Language: TypeScript, JavaScript\n- Size: ~2.1M lines of code\n- Dependencies: 847 packages\n\nScanning for:\n• Authentication & authorization flaws\n• Input validation issues\n• Dependency vulnerabilities\n• Code injection risks\n• Information disclosure\n\n**Analysis Progress: 100%**\n\n⚠️ **Found 3 security issues:**\n\n**1. Potential XSS in HTML parsing** (Medium)\n• Location: packages/next/src/server/api-utils/index.ts:142\n• Risk: Client-side code execution\n\n**2. Dependency vulnerability** (High)\n• Package: semver@5.7.1\n• CVE: CVE-2022-25883\n• Fix: Update to semver@7.5.4\n\n**3. Path traversal risk** (Low)\n• Location: packages/next/src/server/serve-static.ts:89\n• Risk: Unauthorized file access\n\nWould you like detailed remediation steps for any of these issues?",
+            timestamp: "2024-09-16T14:31:30Z",
+            type: "text"
           },
           {
             id: "3",
             sender: "user", 
-            content: "Yes, please provide detailed remediation steps for the XSS vulnerability",
-            timestamp: "2 hours ago",
+            content: "Show me details for the XSS vulnerability",
+            timestamp: "2024-09-16T14:32:15Z",
+            type: "text"
           },
           {
             id: "4",
             sender: "ai",
-            content: "## XSS Vulnerability Remediation\n\n**Issue**: Unescaped user input in React components\n**Severity**: High\n**Location**: `src/components/UserProfile.jsx:45`\n\n### Current Vulnerable Code:\n```jsx\nfunction UserProfile({ userData }) {\n  return (\n    <div dangerouslySetInnerHTML={{ __html: userData.bio }} />\n  );\n}\n```\n\n### Recommended Fix:\n```jsx\nimport DOMPurify from 'dompurify';\n\nfunction UserProfile({ userData }) {\n  const sanitizedBio = DOMPurify.sanitize(userData.bio);\n  return (\n    <div dangerouslySetInnerHTML={{ __html: sanitizedBio }} />\n  );\n}\n```\n\n### Additional Steps:\n1. Install DOMPurify: `npm install dompurify`\n2. Sanitize all user inputs before rendering\n3. Use Content Security Policy (CSP) headers\n4. Implement input validation on the backend",
-            timestamp: "1 hour ago",
+            content: "# XSS Vulnerability Analysis\n\n## Issue Details\n**Severity:** Medium (CVSS 6.1)\n**Type:** Reflected Cross-Site Scripting\n**Location:** `packages/next/src/server/api-utils/index.ts:142`\n**CWE:** CWE-79 (Cross-site Scripting)\n\n## Vulnerable Code\n```typescript\n// Current implementation\nexport function parseBody(req: IncomingMessage, limit: string | number) {\n  const contentType = req.headers['content-type'] || 'text/plain'\n  if (contentType.includes('application/json')) {\n    // Potential XSS: user input not sanitized\n    return JSON.parse(body.toString())\n  }\n}\n```\n\n## Security Risk\n• Unsanitized JSON parsing allows malicious payloads\n• Can execute JavaScript in user's browser\n• Affects server-side rendering contexts\n• Potential data theft and session hijacking\n\n## Recommended Fix\n```typescript\nimport { sanitize } from 'dompurify'\n\nexport function parseBody(req: IncomingMessage, limit: string | number) {\n  const contentType = req.headers['content-type'] || 'text/plain'\n  if (contentType.includes('application/json')) {\n    try {\n      const parsed = JSON.parse(body.toString())\n      // Sanitize before processing\n      return sanitizeObject(parsed)\n    } catch (e) {\n      throw new Error('Invalid JSON payload')\n    }\n  }\n}\n\nfunction sanitizeObject(obj: any): any {\n  if (typeof obj === 'string') {\n    return sanitize(obj)\n  }\n  // Handle nested objects...\n}\n```\n\n## Implementation Steps\n1. Install DOMPurify: `npm install isomorphic-dompurify`\n2. Create sanitization utility function\n3. Apply sanitization to all user inputs\n4. Add Content Security Policy headers\n5. Test with XSS payloads\n\n## Testing\nTest with payload: `{\"name\": \"<script>alert('XSS')</script>\"}`",
+            timestamp: "2024-09-16T14:33:45Z",
+            type: "text"
           },
         ];
         
@@ -223,14 +264,16 @@ export default function AVAISinglePage() {
           {
             id: "1",
             sender: "user",
-            content: "Please audit my Node.js API server for security issues",
-            timestamp: "1 day ago",
+            content: "https://github.com/facebook/react",
+            timestamp: "2024-09-15T09:15:00Z",
+            type: "text"
           },
           {
             id: "2",
             sender: "ai", 
-            content: "I'll perform a comprehensive security audit of your Node.js API server.\n\n**🔍 Scanning API endpoints, authentication, and database queries...**\n\n**⚠️ CRITICAL ISSUE DETECTED**\n\n**SQL Injection Vulnerability Found**\n- **Severity**: Critical (CVSS 9.8)\n- **Location**: `src/auth/login.js:42`\n- **Impact**: Complete database compromise possible\n\n**Additional Findings**:\n- 3 Medium severity authentication issues\n- 4 Low severity information disclosure risks  \n- Missing rate limiting on API endpoints\n\nThis is a **high-priority security risk** that should be addressed immediately. Would you like me to show you how to fix the SQL injection vulnerability?",
-            timestamp: "1 day ago",
+            content: "Analyzing the React repository for security vulnerabilities...\n\n🔍 **Repository Analysis**\n- Repository: facebook/react\n- Primary Language: JavaScript (78.2%)\n- Lines of Code: ~1.8M\n- Active Contributors: 1,600+\n\n**Scan Results:**\n\n🛡️ **Security Assessment: STRONG**\n\n✅ **Strengths Identified:**\n• Comprehensive input sanitization\n• Strong XSS protection mechanisms\n• Regular security audits and updates\n• Proper CSP implementation\n• Safe defaults for DOM manipulation\n\n⚠️ **Minor Issues Found:**\n\n**1. Prototype Pollution Risk** (Low)\n• Location: packages/shared/objectIs.js:23\n• Impact: Potential object property manipulation\n• Status: Theoretical risk, requires specific conditions\n\n**2. Dependency Alert** (Info)\n• Package: ws@6.2.2 in devDependencies\n• Recommendation: Update to latest version\n• Impact: Development environment only\n\n**Overall Security Score: 94/100**\n\nThe React codebase follows excellent security practices. The development team has implemented robust protections against common web vulnerabilities.\n\n**Recommendation:** Continue current security practices. Consider automated dependency scanning in CI/CD pipeline.",
+            timestamp: "2024-09-15T09:16:45Z",
+            type: "text"
           },
         ];
         
@@ -239,14 +282,16 @@ export default function AVAISinglePage() {
           {
             id: "1", 
             sender: "user",
-            content: "Start a security audit on my frontend React application",
-            timestamp: "3 minutes ago",
+            content: "https://github.com/microsoft/vscode",
+            timestamp: "2024-09-16T16:22:00Z",
+            type: "text"
           },
           {
             id: "2",
             sender: "ai",
-            content: "🔄 **Security Audit In Progress**\n\nScanning your React frontend application...\n\n✅ **Completed Steps**:\n- Dependency vulnerability scan\n- Component security analysis\n- Authentication flow review\n\n🔄 **Currently Processing**:\n- API security validation\n- Data sanitization checks\n- XSS prevention analysis\n\n**Estimated completion**: 2-3 minutes\n\nI'll provide a detailed report once the scan is complete.",
-            timestamp: "2 minutes ago",
+            content: "🔄 **Security Audit In Progress**\n\nAnalyzing VS Code repository...\n\n📊 **Repository Info:**\n- Repository: microsoft/vscode\n- Language: TypeScript (85.4%)\n- Size: ~3.2M lines of code\n- Electron-based application\n\n✅ **Completed Scans:**\n• Static code analysis (100%)\n• Dependency vulnerability check (100%)\n• Authentication flow review (100%)\n• File system access patterns (100%)\n\n🔄 **Current Analysis:**\n• Extension security model\n• Inter-process communication\n• Node.js integration security\n\n**Estimated completion:** 45 seconds\n\nI'll provide a comprehensive security report once analysis is complete...",
+            timestamp: "2024-09-16T16:22:30Z",
+            type: "text"
           },
         ];
         
@@ -255,14 +300,16 @@ export default function AVAISinglePage() {
           {
             id: "1",
             sender: "user",
-            content: "Audit my React Native mobile app for security vulnerabilities",
-            timestamp: "3 days ago",
+            content: "https://github.com/tailwindlabs/tailwindcss",
+            timestamp: "2024-09-13T11:45:00Z",
+            type: "text"
           },
           {
             id: "2",
             sender: "ai",
-            content: "🎉 **Security Audit Complete - All Checks Passed!**\n\n**Mobile App Security Assessment Results**:\n\n✅ **Secure Areas**:\n- Authentication implementation is robust\n- API communications properly encrypted\n- Sensitive data storage follows best practices\n- No hardcoded secrets or API keys found\n- Proper certificate pinning implemented\n\n✅ **Security Score**: 98/100\n\n**Minor Recommendations**:\n1. Consider implementing biometric authentication\n2. Add additional API rate limiting\n3. Enable advanced threat detection\n\n**Overall Assessment**: Your mobile application follows excellent security practices. No critical or high-severity vulnerabilities detected.",
-            timestamp: "3 days ago",
+            content: "# Security Audit Complete ✅\n\n**Repository:** tailwindlabs/tailwindcss\n**Audit Date:** September 13, 2024\n**Audit Duration:** 2m 34s\n\n## 🛡️ Security Assessment\n\n**Overall Security Score: 96/100**\n\n### ✅ Security Strengths\n• **No critical vulnerabilities detected**\n• Strong input validation for CSS parsing\n• Safe PostCSS plugin architecture\n• Proper file path sanitization\n• No hardcoded secrets or API keys\n• Secure build process and CI/CD pipeline\n\n### 📋 Findings Summary\n**Total Issues:** 2 (both low severity)\n\n**1. Development Dependency Alert**\n• Package: `chokidar@3.5.1`\n• Severity: Low\n• Issue: Minor path traversal in development mode\n• Impact: Development environment only\n• Fix: Update to chokidar@3.5.3\n\n**2. Documentation Security**\n• Location: docs/src/pages/guides/\n• Issue: Some code examples lack input validation\n• Impact: Could mislead developers\n• Recommendation: Add security notes to examples\n\n### 🏆 Best Practices Observed\n• Comprehensive input sanitization\n• Safe CSS class name generation\n• Proper error handling\n• Regular dependency updates\n• Security-focused code reviews\n\n**Recommendation:** Excellent security posture. Minor updates suggested for development dependencies.",
+            timestamp: "2024-09-13T11:47:34Z",
+            type: "text"
           },
         ];
         
@@ -379,6 +426,7 @@ export default function AVAISinglePage() {
                 isLoading={isLoading}
                 isEmpty={false}
                 className="flex-1"
+                isHistoricalLoad={isLoadingHistory}
               />
             </>
           ) : (
@@ -388,6 +436,7 @@ export default function AVAISinglePage() {
               isLoading={isLoading}
               isEmpty={messages.length === 0}
               className="h-full"
+              isHistoricalLoad={isLoadingHistory}
             />
           )}
         </div>

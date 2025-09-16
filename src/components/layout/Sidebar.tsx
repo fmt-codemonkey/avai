@@ -4,9 +4,7 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { 
   Shield, 
-  ShieldCheck, 
   ShieldAlert, 
-  ShieldX,
   Search,
   FileCode,
   BarChart3,
@@ -207,7 +205,9 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
                   variant={activeItem === item.href ? "secondary" : "ghost"}
                   className={cn(
                     "w-full justify-start gap-2 h-10",
-                    activeItem === item.href && "bg-primary/10 text-primary border-primary/20"
+                    activeItem === item.href 
+                      ? "bg-primary/10 text-primary border-primary/20" 
+                      : "border border-border/30 dark:border-border/20 hover:border-border/50 dark:hover:border-border/40"
                   )}
                   onClick={() => setActiveItem(item.href)}
                 >
@@ -271,7 +271,7 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
                 <Button
                   key={item.href}
                   variant="ghost"
-                  className="w-full justify-start gap-2 h-9 text-sm"
+                  className="w-full justify-start gap-2 h-9 text-sm border border-border/30 dark:border-border/20 hover:border-border/50 dark:hover:border-border/40"
                   onClick={() => setActiveItem(item.href)}
                 >
                   <item.icon className="h-4 w-4" />
