@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
+import { ClerkProvider } from '@clerk/nextjs';
 
 const inter = Inter({
   variable: "--font-geist-sans",
@@ -39,12 +40,14 @@ export default function RootLayout({
           <div className="absolute inset-0 bg-noise mix-blend-overlay" />
         </div>
 
-        <ThemeProvider>
-          {/* Content container - exactly 100vh with no overflow */}
-          <div className="relative h-screen overflow-hidden">
-            {children}
-          </div>
-        </ThemeProvider>
+        <ClerkProvider>
+          <ThemeProvider>
+            {/* Content container - exactly 100vh with no overflow */}
+            <div className="relative h-screen overflow-hidden">
+              {children}
+            </div>
+          </ThemeProvider>
+        </ClerkProvider>
       </body>
     </html>
   );
