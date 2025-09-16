@@ -95,6 +95,62 @@ const mockChatHistory: ChatHistoryItem[] = [
     timestamp: "1 week ago",
     status: "completed",
     vulnerabilityCount: 12
+  },
+  {
+    id: "chat-6",
+    title: "Docker Container Scan", 
+    preview: "Insecure image configurations detected",
+    timestamp: "2 weeks ago",
+    status: "completed",
+    vulnerabilityCount: 6
+  },
+  {
+    id: "chat-7",
+    title: "Database Security Review",
+    preview: "Permission escalation vulnerability found",
+    timestamp: "3 weeks ago", 
+    status: "completed",
+    vulnerabilityCount: 3
+  },
+  {
+    id: "chat-8",
+    title: "Cloud Infrastructure Audit",
+    preview: "Misconfigured S3 bucket detected",
+    timestamp: "1 month ago",
+    status: "completed",
+    vulnerabilityCount: 5
+  },
+  {
+    id: "chat-9",
+    title: "Network Security Assessment",
+    preview: "Open ports and weak encryption found",
+    timestamp: "1 month ago",
+    status: "completed", 
+    vulnerabilityCount: 7
+  },
+  {
+    id: "chat-10",
+    title: "Third-party Dependency Check",
+    preview: "Outdated packages with known CVEs", 
+    timestamp: "2 months ago",
+    status: "completed",
+    vulnerabilityCount: 15
+  },
+  {
+    id: "chat-11",
+    title: "Authentication System Review",
+    preview: "Weak password policy detected", 
+    timestamp: "2 months ago",
+    status: "completed",
+    vulnerabilityCount: 2
+  },
+  {
+    id: "chat-12",
+    title: "CI/CD Pipeline Security",
+    preview: "Secrets exposed in build logs", 
+    timestamp: "3 months ago",
+    status: "completed",
+    vulnerabilityCount: 9
   }
 ];
 
@@ -106,7 +162,7 @@ function AuthenticatedUserSection({ theme, setTheme }: { theme: string | undefin
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="w-full p-3 h-auto justify-start hover:bg-muted/50">
+        <Button variant="ghost" className="w-full p-3 h-auto justify-start hover:bg-muted/25 dark:hover:bg-muted/15 transition-all duration-200">
           <div className="flex items-center gap-3 w-full">
             <div className="w-8 h-8 rounded-full bg-gradient-primary flex items-center justify-center overflow-hidden">
               {user?.imageUrl ? (
@@ -125,7 +181,7 @@ function AuthenticatedUserSection({ theme, setTheme }: { theme: string | undefin
               <div className="text-sm font-medium">
                 {user?.fullName || user?.firstName || 'User'}
               </div>
-              <div className="text-xs text-muted-foreground">Pro plan</div>
+              <div className="text-xs text-muted-foreground">Basic plan</div>
             </div>
             <ChevronRight className="w-4 h-4 text-muted-foreground" />
           </div>
@@ -158,36 +214,54 @@ function AuthenticatedUserSection({ theme, setTheme }: { theme: string | undefin
             <div className="text-sm font-medium">
               {user?.fullName || user?.firstName || 'Personal'}
             </div>
-            <div className="text-xs text-muted-foreground">Pro plan</div>
+            <div className="text-xs text-muted-foreground">Basic plan</div>
           </div>
           <CheckCircle className="w-4 h-4 text-primary ml-auto" />
         </div>
         
         <div className="py-2">
-          <DropdownMenuItem className="px-4 py-2.5 flex items-center justify-between cursor-pointer hover:bg-muted/50 rounded-md mx-2">
+          <DropdownMenuItem 
+            disabled
+            className="px-4 py-2.5 flex items-center justify-between cursor-not-allowed opacity-60 rounded-md mx-2"
+          >
             <span className="text-sm">Settings</span>
+            <Badge variant="secondary" className="text-xs px-2 py-0.5">Coming Soon</Badge>
           </DropdownMenuItem>
           
-          <DropdownMenuItem className="px-4 py-2.5 flex items-center justify-between cursor-pointer hover:bg-muted/50 rounded-md mx-2">
+          <DropdownMenuItem 
+            disabled
+            className="px-4 py-2.5 flex items-center justify-between cursor-not-allowed opacity-60 rounded-md mx-2"
+          >
             <span className="text-sm">Language</span>
-            <ChevronRight className="w-4 h-4 text-muted-foreground" />
+            <Badge variant="secondary" className="text-xs px-2 py-0.5">In Progress</Badge>
           </DropdownMenuItem>
           
-          <DropdownMenuItem className="px-4 py-2.5 cursor-pointer hover:bg-muted/50 rounded-md mx-2">
+          <DropdownMenuItem 
+            disabled
+            className="px-4 py-2.5 flex items-center justify-between cursor-not-allowed opacity-60 rounded-md mx-2"
+          >
             <span className="text-sm">Get help</span>
+            <Badge variant="secondary" className="text-xs px-2 py-0.5">Coming Soon</Badge>
           </DropdownMenuItem>
         </div>
         
         <DropdownMenuSeparator className="mx-2" />
         
         <div className="py-2">
-          <DropdownMenuItem className="px-4 py-2.5 cursor-pointer hover:bg-muted/50 rounded-md mx-2">
+          <DropdownMenuItem 
+            disabled
+            className="px-4 py-2.5 flex items-center justify-between cursor-not-allowed opacity-60 rounded-md mx-2"
+          >
             <span className="text-sm">Upgrade plan</span>
+            <Badge variant="outline" className="text-xs px-2 py-0.5 border-primary/30 text-primary">Soon</Badge>
           </DropdownMenuItem>
           
-          <DropdownMenuItem className="px-4 py-2.5 flex items-center justify-between cursor-pointer hover:bg-muted/50 rounded-md mx-2">
+          <DropdownMenuItem 
+            disabled
+            className="px-4 py-2.5 flex items-center justify-between cursor-not-allowed opacity-60 rounded-md mx-2"
+          >
             <span className="text-sm">Learn more</span>
-            <ChevronRight className="w-4 h-4 text-muted-foreground" />
+            <Badge variant="secondary" className="text-xs px-2 py-0.5">In Progress</Badge>
           </DropdownMenuItem>
         </div>
         
@@ -200,7 +274,7 @@ function AuthenticatedUserSection({ theme, setTheme }: { theme: string | undefin
             <Button 
               variant={theme === "light" ? "default" : "outline"} 
               size="sm" 
-              className="flex-1 h-8 text-xs hover:bg-muted/50" 
+              className="flex-1 h-8 text-xs hover:bg-muted/25 dark:hover:bg-muted/15 transition-colors" 
               onClick={() => setTheme("light")}
             >
               <Sun className="w-3 h-3 mr-1.5" />
@@ -209,7 +283,7 @@ function AuthenticatedUserSection({ theme, setTheme }: { theme: string | undefin
             <Button 
               variant={theme === "dark" ? "default" : "outline"} 
               size="sm" 
-              className="flex-1 h-8 text-xs hover:bg-muted/50" 
+              className="flex-1 h-8 text-xs hover:bg-muted/25 dark:hover:bg-muted/15 transition-colors" 
               onClick={() => setTheme("dark")}
             >
               <Moon className="w-3 h-3 mr-1.5" />
@@ -218,7 +292,7 @@ function AuthenticatedUserSection({ theme, setTheme }: { theme: string | undefin
             <Button 
               variant={theme === "system" ? "default" : "outline"} 
               size="sm" 
-              className="flex-1 h-8 text-xs hover:bg-muted/50" 
+              className="flex-1 h-8 text-xs hover:bg-muted/25 dark:hover:bg-muted/15 transition-colors" 
               onClick={() => setTheme("system")}
             >
               <Monitor className="w-3 h-3 mr-1.5" />
@@ -231,7 +305,7 @@ function AuthenticatedUserSection({ theme, setTheme }: { theme: string | undefin
         
         <div className="py-2">
           <DropdownMenuItem 
-            className="px-4 py-2.5 cursor-pointer hover:bg-destructive/10 rounded-md mx-2 text-destructive"
+            className="px-4 py-2.5 cursor-pointer hover:bg-destructive/10 dark:hover:bg-destructive/15 rounded-md mx-2 text-destructive transition-colors"
             onClick={() => signOut()}
           >
             <LogOut className="w-4 h-4 mr-2" />
@@ -280,6 +354,50 @@ function UnauthenticatedSection() {
   );
 }
 
+// Component for authenticated users in collapsed state
+function CollapsedAuthenticatedSection({ onToggle }: { onToggle?: () => void }) {
+  const { user } = useUser();
+
+  return (
+    <Button
+      variant="ghost"
+      onClick={onToggle}
+      className="w-8 h-8 p-0 rounded-full hover:bg-muted/25 dark:hover:bg-muted/15 transition-colors"
+      title={`${user?.fullName || user?.firstName || 'User'} - Click to expand`}
+    >
+      <div className="w-6 h-6 rounded-full bg-gradient-primary flex items-center justify-center overflow-hidden">
+        {user?.imageUrl ? (
+          <Image 
+            src={user.imageUrl} 
+            alt="User Avatar" 
+            width={24} 
+            height={24} 
+            className="w-full h-full object-cover" 
+          />
+        ) : (
+          <User className="w-3 h-3 text-white" />
+        )}
+      </div>
+    </Button>
+  );
+}
+
+// Component for unauthenticated users in collapsed state
+function CollapsedUnauthenticatedSection({ onToggle }: { onToggle?: () => void }) {
+  return (
+    <Button
+      variant="ghost"
+      onClick={onToggle}
+      className="w-8 h-8 p-0 rounded-full hover:bg-muted/25 dark:hover:bg-muted/15 transition-colors"
+      title="Sign in - Click to expand"
+    >
+      <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center">
+        <User className="w-3 h-3 text-muted-foreground" />
+      </div>
+    </Button>
+  );
+}
+
 export default function LeftSidebar({ 
   isCollapsed = false,
   onToggle,
@@ -313,39 +431,42 @@ export default function LeftSidebar({
             variant="ghost"
             size="sm"
             onClick={onToggle}
-            className="w-8 h-8 p-0"
+            className="w-8 h-8 p-0 hover:bg-muted/25 dark:hover:bg-muted/15 transition-colors"
           >
             <ChevronRight className="w-4 h-4" />
           </Button>
         </div>
 
         {/* Collapsed navigation */}
-        <div className="flex flex-col gap-2 p-2">
+        <div className="flex flex-col gap-2 p-2 flex-1">
           <Button
             variant="ghost"
             size="sm"
-            onClick={onNewChat}
-            className="w-8 h-8 p-0"
-            title="New Chat"
+            onClick={onToggle}
+            className="w-8 h-8 p-0 hover:bg-muted/25 dark:hover:bg-muted/15 transition-colors"
+            title="New Security Audit"
           >
             <Plus className="w-4 h-4" />
           </Button>
           <Button
             variant="ghost"
             size="sm"
-            className="w-8 h-8 p-0"
-            title="History"
+            onClick={onToggle}
+            className="w-8 h-8 p-0 hover:bg-muted/25 dark:hover:bg-muted/15 transition-colors"
+            title="Recent Audits"
           >
             <History className="w-4 h-4" />
           </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-8 h-8 p-0"
-            title="History"
-          >
-            <History className="w-4 h-4" />
-          </Button>
+        </div>
+
+        {/* Collapsed Authentication Section */}
+        <div className="p-2 border-t border-border">
+          <SignedIn>
+            <CollapsedAuthenticatedSection onToggle={onToggle} />
+          </SignedIn>
+          <SignedOut>
+            <CollapsedUnauthenticatedSection onToggle={onToggle} />
+          </SignedOut>
         </div>
       </div>
     );
@@ -364,7 +485,7 @@ export default function LeftSidebar({
             variant="ghost"
             size="sm"
             onClick={onToggle}
-            className="w-8 h-8 p-0"
+            className="w-8 h-8 p-0 hover:bg-muted/25 dark:hover:bg-muted/15 transition-colors"
           >
             <ChevronLeft className="w-4 h-4" />
           </Button>
@@ -373,24 +494,24 @@ export default function LeftSidebar({
         {/* New Chat Button */}
         <Button 
           onClick={onNewChat}
-          className="w-full bg-primary hover:bg-primary/90 glow-cyber"
+          className="w-full bg-primary hover:bg-primary/90 dark:hover:bg-primary/95 glow-cyber transition-all duration-200 hover:shadow-md hover:scale-[1.01]"
         >
-          <Plus className="w-4 h-4 mr-2" />
+          <Plus className="w-4 h-4" />
           New Security Audit
         </Button>
       </div>
 
-      {/* Chat History */}
-      <div className="flex-1 overflow-hidden">
-        <div className="p-3">
+      {/* Chat History - Scrollable Section */}
+      <div className="flex-1 flex flex-col min-h-0">
+        <div className="p-3 flex-shrink-0">
           <h3 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
             <History className="w-4 h-4" />
             Recent Audits
           </h3>
         </div>
 
-        <ScrollArea className="flex-1 px-3">
-          <div className="space-y-2">
+        <ScrollArea className="flex-1 min-h-0">
+          <div className="space-y-2 px-3 pb-3">
             {mockChatHistory.map((chat) => (
               <button
                 key={chat.id}
@@ -398,23 +519,30 @@ export default function LeftSidebar({
                 onMouseEnter={() => setHoveredChat(chat.id)}
                 onMouseLeave={() => setHoveredChat(null)}
                 className={cn(
-                  "w-full text-left p-3 rounded-lg border transition-all duration-200",
-                  "hover:bg-muted/50 hover:border-primary/30",
+                  "w-full text-left p-3 rounded-lg border transition-all duration-300 ease-out",
+                  "hover:border-primary/40 hover:bg-primary/[0.02] hover:shadow-sm",
+                  "dark:hover:border-primary/35 dark:hover:bg-primary/[0.015]",
+                  "group relative overflow-hidden",
+                  "before:absolute before:inset-0 before:bg-gradient-to-r before:from-primary/[0.02] before:to-transparent before:opacity-0 before:transition-opacity before:duration-300",
+                  "hover:before:opacity-100",
+                  "focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50",
                   currentChatId === chat.id 
-                    ? "bg-primary/10 border-primary/50" 
-                    : "bg-card border-border/50",
+                    ? "bg-primary/8 border-primary/50 shadow-sm before:opacity-50" 
+                    : "bg-card/80 border-border/40",
                   hoveredChat === chat.id && "shadow-md"
                 )}
               >
                 <div className="space-y-2">
                   <div className="flex items-start justify-between gap-2">
-                    <h4 className="font-medium text-sm truncate text-foreground">
+                    <h4 className="font-medium text-sm truncate text-foreground group-hover:text-primary/80 transition-colors duration-300">
                       {chat.title}
                     </h4>
-                    {getStatusIcon(chat.status)}
+                    <div className="transition-transform duration-300 group-hover:scale-110">
+                      {getStatusIcon(chat.status)}
+                    </div>
                   </div>
                   
-                  <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                  <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed group-hover:text-foreground/70 transition-colors duration-300">
                     {chat.preview}
                   </p>
                   
@@ -426,7 +554,13 @@ export default function LeftSidebar({
                     {chat.vulnerabilityCount !== undefined && (
                       <Badge 
                         variant={chat.vulnerabilityCount === 0 ? "secondary" : "destructive"}
-                        className="text-xs"
+                        className={cn(
+                          "text-xs transition-all duration-300",
+                          "group-hover:shadow-sm",
+                          chat.vulnerabilityCount === 0 
+                            ? "group-hover:bg-green-500/20 group-hover:text-green-600 group-hover:border-green-500/30" 
+                            : "group-hover:bg-red-500/20 group-hover:text-red-600 group-hover:border-red-500/30 group-hover:shadow-red-500/20"
+                        )}
                       >
                         {chat.vulnerabilityCount === 0 
                           ? "Secure" 
@@ -442,8 +576,8 @@ export default function LeftSidebar({
         </ScrollArea>
       </div>
 
-      {/* Authentication Section */}
-      <div className="p-3 border-t border-border">
+      {/* Authentication Section - Fixed at Bottom */}
+      <div className="flex-shrink-0 p-3 border-t border-border bg-card">
         <SignedIn>
           <AuthenticatedUserSection theme={theme} setTheme={setTheme} />
         </SignedIn>
