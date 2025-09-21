@@ -34,7 +34,7 @@ export function WebSocketDebugger() {
 
   const testConnection = () => {
     addLog('Starting connection test...');
-    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'wss://avai-backend-production.up.railway.app/ws';
+    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'wss://avai-backend.onrender.com/ws';
     addLog(`Using WebSocket URL: ${wsUrl}`);
     connect();
   };

@@ -52,7 +52,7 @@ interface WebSocketState {
   reset: () => void;
 }
 
-const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'wss://avai-backend-production.up.railway.app/ws';
+const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'wss://avai-backend.onrender.com/ws';
 const MAX_MESSAGE_HISTORY = 50;
 const MAX_RECONNECT_ATTEMPTS = 5;
 const RECONNECT_INTERVALS = [1000, 2000, 4000, 8000, 16000]; // Exponential backoff
