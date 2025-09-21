@@ -52,7 +52,7 @@ interface WebSocketState {
   reset: () => void;
 }
 
-const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'wss://websocket.avai.life/ws';
+const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'wss://avai-backend-production.up.railway.app/ws';
 const MAX_MESSAGE_HISTORY = 50;
 const MAX_RECONNECT_ATTEMPTS = 5;
 const RECONNECT_INTERVALS = [1000, 2000, 4000, 8000, 16000]; // Exponential backoff
@@ -91,9 +91,11 @@ export const useWebSocketStore = create<WebSocketState>((set, get) => {
     
     // Don't connect if already connected or connecting
     if (state.isConnected || state.isConnecting) {
+      console.log('WebSocket: Already connected or connecting, skipping');
       return;
     }
 
+    console.log('WebSocket: Attempting to connect to:', url);
     set({ 
       isConnecting: true, 
       lastError: null 
@@ -101,6 +103,7 @@ export const useWebSocketStore = create<WebSocketState>((set, get) => {
 
     try {
       const ws = new WebSocket(url);
+      console.log('WebSocket: Created WebSocket instance');
       
       // Set a shorter timeout to prevent hanging
       const connectionTimeout = setTimeout(() => {
@@ -159,37 +162,59 @@ export const useWebSocketStore = create<WebSocketState>((set, get) => {
       };
 
       ws.onclose = (event) => {
-        console.log('WebSocket disconnected:', event.code, event.reason);
+        console.log('WebSocket disconnected:', {
+          code: event.code, 
+          reason: event.reason,
+          wasClean: event.wasClean,
+          url: url
+        });
         clearTimeout(connectionTimeout);
         
         const wasConnected = get().isConnected;
+        
+        // Provide more specific error messages based on close codes
+        let errorMessage = 'Failed to connect';
+        if (event.code === 1006) {
+          errorMessage = 'Connection closed abnormally - server may be down or overloaded';
+        } else if (event.code === 1002) {
+          errorMessage = 'WebSocket protocol error';
+        } else if (event.code === 1011) {
+          errorMessage = 'Server error - backend may be unhealthy';
+        } else if (wasConnected) {
+          errorMessage = 'Connection lost';
+        }
         
         set((state) => ({ 
           ws: null,
           isConnected: false, 
           isConnecting: false,
           reconnectAttempts: state.reconnectAttempts + 1,
-          lastError: wasConnected ? 'Connection lost' : 'Failed to connect'
+          lastError: errorMessage
         }));
 
         // Only auto-reconnect if we were previously connected and it wasn't a manual disconnect
-        if (event.code !== 1000 && wasConnected && get().reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+        if (event.code !== 1000 && event.code !== 1001 && wasConnected && get().reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
           console.log('Scheduling reconnection...');
           scheduleReconnect();
         } else if (get().reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
           console.log('Max reconnection attempts reached, giving up');
-          set({ lastError: 'Unable to maintain connection - please refresh the page' });
+          set({ lastError: `Unable to connect after ${MAX_RECONNECT_ATTEMPTS} attempts - server may be down` });
         }
       };
 
       ws.onerror = (error) => {
-        console.error('WebSocket error:', error);
+        console.error('WebSocket error details:', {
+          error,
+          url,
+          readyState: ws.readyState,
+          timestamp: new Date().toISOString()
+        });
         clearTimeout(connectionTimeout);
         
         set((state) => ({ 
           ws: null,
           isConnected: false,
-          lastError: 'Connection error - check your internet connection',
+          lastError: `Connection error to ${url} - server may be unavailable or overloaded`,
           isConnecting: false,
           reconnectAttempts: state.reconnectAttempts + 1
         }));

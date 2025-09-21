@@ -4,7 +4,7 @@ import { useEffect, useCallback } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { useWebSocketStore, WSMessage } from '@/stores/websocket-store';
 
-const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'wss://websocket.avai.life/ws';
+const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'wss://avai-backend-production.up.railway.app/ws';
 
 export function useWebSocket(autoConnect: boolean = false) {
   const { user, isSignedIn } = useUser();
