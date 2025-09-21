@@ -407,6 +407,7 @@ export default function LeftSidebar({
   currentChatId,
   className
 }: LeftSidebarProps) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [hoveredChat, setHoveredChat] = useState<string | null>(null);
   const { theme, setTheme } = useTheme();
 
@@ -476,17 +477,17 @@ export default function LeftSidebar({
   return (
     <div className={cn("w-80 border-r border-border bg-card flex flex-col", className)}>
       {/* Header */}
-      <div className="p-4 border-b border-border">
+      <div className="p-4 border-b border-border/50">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <Shield className="w-6 h-6 text-primary glow-cyber" />
-            <span className="font-bold text-lg text-gradient-cyber">AVAI</span>
+            <Shield className="w-5 h-5 text-primary" />
+            <span className="font-semibold text-lg text-foreground">AVAI</span>
           </div>
           <Button
             variant="ghost"
-            size="sm"
+            size="icon"
             onClick={onToggle}
-            className="w-8 h-8 p-0 hover:bg-muted/25 dark:hover:bg-muted/15 transition-colors"
+            className="h-8 w-8 hover:bg-muted/50 transition-colors"
           >
             <ChevronLeft className="w-4 h-4" />
           </Button>
@@ -495,24 +496,25 @@ export default function LeftSidebar({
         {/* New Chat Button */}
         <Button 
           onClick={onNewChat}
-          className="w-full bg-primary hover:bg-primary/90 dark:hover:bg-primary/95 glow-cyber transition-all duration-200 hover:shadow-md hover:scale-[1.01]"
+          size="sm"
+          className="w-full h-9 bg-primary hover:bg-primary/90 text-primary-foreground font-medium transition-colors"
         >
-          <Plus className="w-4 h-4" />
+          <Plus className="w-4 h-4 mr-2" />
           New Security Audit
         </Button>
       </div>
 
       {/* Chat History - Scrollable Section */}
       <div className="flex-1 flex flex-col min-h-0">
-        <div className="p-3 flex-shrink-0">
-          <h3 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
-            <History className="w-4 h-4" />
+        <div className="px-4 py-3 flex-shrink-0 border-b border-border/50">
+          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+            <History className="w-3.5 h-3.5" />
             Recent Audits
           </h3>
         </div>
 
         <ScrollArea className="flex-1 min-h-0">
-          <div className="space-y-2 px-3 pb-3">
+          <div className="space-y-1 px-2 pt-2 pb-3">
             {mockChatHistory.map((chat) => (
               <button
                 key={chat.id}
@@ -520,54 +522,86 @@ export default function LeftSidebar({
                 onMouseEnter={() => setHoveredChat(chat.id)}
                 onMouseLeave={() => setHoveredChat(null)}
                 className={cn(
-                  "w-full text-left p-3 rounded-lg border transition-all duration-300 ease-out",
-                  "hover:border-primary/40 hover:bg-primary/[0.02] hover:shadow-sm",
-                  "dark:hover:border-primary/35 dark:hover:bg-primary/[0.015]",
-                  "group relative overflow-hidden",
-                  "before:absolute before:inset-0 before:bg-gradient-to-r before:from-primary/[0.02] before:to-transparent before:opacity-0 before:transition-opacity before:duration-300",
-                  "hover:before:opacity-100",
-                  "focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50",
+                  // Base styles
+                  "w-full text-left p-3 rounded-md transition-all duration-200",
+                  "group relative overflow-visible",
+                  "focus:outline-none focus:ring-1 focus:ring-primary/30",
+                  
+                  // Active state (like Claude AI)
                   currentChatId === chat.id 
-                    ? "bg-primary/8 border-primary/50 shadow-sm before:opacity-50" 
-                    : "bg-card/80 border-border/40",
-                  hoveredChat === chat.id && "shadow-md"
+                    ? "bg-primary/10 text-foreground shadow-sm border-l-2 border-primary" 
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
+                  
+                  // Hover effects
+                  "hover:shadow-sm",
+                  
+                  // Smooth transitions
+                  "transition-colors duration-200"
                 )}
               >
                 <div className="space-y-2">
                   <div className="flex items-start justify-between gap-2">
-                    <h4 className="font-medium text-sm truncate text-foreground group-hover:text-primary/80 transition-colors duration-300">
+                    <h4 className={cn(
+                      "font-medium text-sm truncate transition-colors duration-200",
+                      currentChatId === chat.id 
+                        ? "text-foreground" 
+                        : "text-foreground group-hover:text-foreground"
+                    )}>
                       {chat.title}
                     </h4>
-                    <div className="transition-transform duration-300 group-hover:scale-110">
+                    <div className="flex-shrink-0">
                       {getStatusIcon(chat.status)}
                     </div>
                   </div>
                   
-                  <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed group-hover:text-foreground/70 transition-colors duration-300">
+                  <p className={cn(
+                    "text-xs line-clamp-2 leading-relaxed transition-colors duration-200",
+                    currentChatId === chat.id 
+                      ? "text-muted-foreground" 
+                      : "text-muted-foreground group-hover:text-foreground/80"
+                  )}>
                     {chat.preview}
                   </p>
                   
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-muted-foreground">
+                    <span className={cn(
+                      "text-[10px] font-medium transition-colors duration-200",
+                      currentChatId === chat.id 
+                        ? "text-muted-foreground/70" 
+                        : "text-muted-foreground/60 group-hover:text-muted-foreground/80"
+                    )}>
                       {chat.timestamp}
                     </span>
                     
                     {chat.vulnerabilityCount !== undefined && (
-                      <Badge 
-                        variant={chat.vulnerabilityCount === 0 ? "secondary" : "destructive"}
-                        className={cn(
-                          "text-xs transition-all duration-300",
-                          "group-hover:shadow-sm",
-                          chat.vulnerabilityCount === 0 
-                            ? "group-hover:bg-green-500/20 group-hover:text-green-600 group-hover:border-green-500/30" 
-                            : "group-hover:bg-red-500/20 group-hover:text-red-600 group-hover:border-red-500/30 group-hover:shadow-red-500/20"
-                        )}
-                      >
+                      <div className={cn(
+                        "inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-thin",
+                        "border transition-all duration-200",
+                        chat.vulnerabilityCount === 0 
+                          ? cn(
+                              // Secure badge - green theme (text only in normal state)
+                              "text-green-700",
+                              "dark:text-green-400",
+                              // Hover/active states (add border + background on interaction)
+                              currentChatId === chat.id 
+                                ? "shadow-sm border border-green-300 bg-green-50 dark:border-green-700/70 dark:bg-green-950/30" 
+                                : "group-hover:border group-hover:border-green-300 group-hover:bg-green-100/80 dark:group-hover:border-green-700/70 dark:group-hover:bg-green-950/50"
+                            )
+                          : cn(
+                              // Issues badge - red theme (text only in normal state)
+                              "text-red-700",
+                              "dark:text-red-400",
+                              // Hover/active states (add border + background on interaction)
+                              currentChatId === chat.id 
+                                ? "shadow-sm border border-red-300 bg-red-50 dark:border-red-700/70 dark:bg-red-950/30" 
+                                : "group-hover:border group-hover:border-red-300 group-hover:bg-red-100/80 dark:group-hover:border-red-700/70 dark:group-hover:bg-red-950/50"
+                            )
+                      )}>
                         {chat.vulnerabilityCount === 0 
                           ? "Secure" 
                           : `${chat.vulnerabilityCount} issues`
                         }
-                      </Badge>
+                      </div>
                     )}
                   </div>
                 </div>

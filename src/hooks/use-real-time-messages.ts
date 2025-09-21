@@ -15,6 +15,9 @@ interface ProcessedMessage {
     isConnectionMessage?: boolean;
     eventType?: string;
     canRetry?: boolean;
+    confidence?: number;
+    processingTime?: number;
+    sessionId?: string;
   };
 }
 
@@ -96,6 +99,10 @@ const convertLogToProfessionalStep = (logMessage: string): string => {
     return 'Establishing AI connection...';
   } else if (cleanMessage.includes('AI analysis complete')) {
     return 'Finalizing response...';
+  } else if (cleanMessage.includes('Generating final response')) {
+    return 'Preparing your answer...';
+  } else if (cleanMessage.includes('Response ready')) {
+    return 'Completing analysis...';
   } else {
     // Fallback: clean and shorten generic messages
     return cleanMessage.length > 50 
@@ -189,6 +196,7 @@ export function useRealTimeMessages() {
           break;
 
         case 'analysis_complete':
+          // Legacy format support - keep for backward compatibility
           // Clear thinking timeout
           if (thinkingTimeout) {
             clearTimeout(thinkingTimeout);
@@ -209,7 +217,7 @@ export function useRealTimeMessages() {
             };
             
             setMessages(prev => [...prev, cleanResponse]);
-            console.log('✅ Analysis completed - showing clean response');
+            console.log('✅ Analysis completed - showing clean response (legacy format)');
           } else {
             // Fallback message if no AI response
             const fallbackResponse: ProcessedMessage = {
@@ -221,6 +229,63 @@ export function useRealTimeMessages() {
             };
             
             setMessages(prev => [...prev, fallbackResponse]);
+          }
+          break;
+
+        case 'response' as WSMessage['type']:
+          // New response format - handle final AI response
+          // Clear thinking timeout
+          if (thinkingTimeout) {
+            clearTimeout(thinkingTimeout);
+            setThinkingTimeout(null);
+          }
+          
+          // Hide thinking indicator and clear step
+          setIsThinking(false);
+          setCurrentThinkingStep("");
+          
+          // Check if response was successful
+          if (wsMessage.response?.final_result?.success) {
+            const aiResponse = wsMessage.response.final_result.response;
+            const confidence = wsMessage.response.final_result.confidence;
+            const processingTime = wsMessage.processing_time;
+            
+            // Use clean response content (metadata will be shown separately in UI)
+            const successResponse: ProcessedMessage = {
+              id: `ai-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+              content: aiResponse,
+              sender: 'ai',
+              type: 'text',
+              timestamp: wsMessage.timestamp,
+              metadata: {
+                confidence,
+                processingTime,
+                sessionId: wsMessage.session_id
+              }
+            };
+            
+            setMessages(prev => [...prev, successResponse]);
+            console.log('✅ AI Response received successfully', {
+              confidence,
+              processingTime,
+              sessionId: wsMessage.session_id
+            });
+          } else {
+            // Handle failed response
+            const errorResponse: ProcessedMessage = {
+              id: `error-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+              content: 'I encountered an issue processing your request. Please try again or rephrase your question.',
+              sender: 'system',
+              type: 'error',
+              timestamp: wsMessage.timestamp,
+              metadata: {
+                isConnectionMessage: false,
+                canRetry: true
+              }
+            };
+            
+            setMessages(prev => [...prev, errorResponse]);
+            console.warn('❌ AI Response failed', wsMessage.response?.final_result);
           }
           break;
 

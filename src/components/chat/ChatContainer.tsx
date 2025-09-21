@@ -29,6 +29,9 @@ interface Message {
     isConnectionMessage?: boolean;
     eventType?: string;
     canRetry?: boolean;
+    confidence?: number;
+    processingTime?: number;
+    sessionId?: string;
   };
 }
 

@@ -3,7 +3,7 @@
 import { create } from "zustand";
 
 export interface WSMessage {
-  type: 'analysis_request' | 'analysis_start' | 'log' | 'analysis_complete';
+  type: 'analysis_request' | 'analysis_start' | 'log' | 'analysis_complete' | 'response';
   prompt?: string;
   client_id?: string;
   analysis_id?: string;
@@ -14,6 +14,16 @@ export interface WSMessage {
     analysis_data?: Record<string, unknown>;
     [key: string]: unknown;
   };
+  // New response format
+  response?: {
+    final_result?: {
+      success: boolean;
+      response: string;
+      confidence?: number;
+    };
+  };
+  session_id?: string;
+  processing_time?: number;
   timestamp: string;
 }
 
@@ -25,6 +35,10 @@ interface WebSocketState {
   lastError: string | null;
   reconnectAttempts: number;
   maxReconnectAttempts: number;
+  
+  // Graceful degradation
+  isOfflineMode: boolean;
+  appStillFunctional: boolean;
   
   // Message handling
   lastMessage: WSMessage | null;
@@ -271,6 +285,12 @@ export const useWebSocketStore = create<WebSocketState>((set, get) => {
     lastError: null,
     reconnectAttempts: 0,
     maxReconnectAttempts: MAX_RECONNECT_ATTEMPTS,
+    
+    // Graceful degradation state
+    isOfflineMode: false,
+    appStillFunctional: true,
+    
+    // Message handling
     lastMessage: null,
     messageHistory: [],
     

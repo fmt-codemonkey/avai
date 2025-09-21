@@ -173,6 +173,24 @@ export function MessageBubble({ message, className, onRetryConnection }: Message
             )}
           </div>
 
+          {/* AI Response Metadata - show confidence and processing time */}
+          {sender === 'ai' && metadata && (metadata.confidence || metadata.processingTime) && (
+            <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
+              {metadata.confidence && (
+                <div className="flex items-center gap-1">
+                  <span className="text-xs">🎯</span>
+                  <span>Confidence: {Math.round(metadata.confidence * 100)}%</span>
+                </div>
+              )}
+              {metadata.processingTime && (
+                <div className="flex items-center gap-1">
+                  <span className="text-xs">⚡</span>
+                  <span>{metadata.processingTime.toFixed(2)}s</span>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Message actions (show on hover like Claude) */}
           <div className={cn(
             "flex items-center gap-1 mt-3 transition-opacity duration-200",
