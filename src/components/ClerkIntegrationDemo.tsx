@@ -27,9 +27,7 @@ export default function ClerkIntegrationDemo() {
 
     // Create WebSocket connection
     const ws = new WebSocket(
-      process.env.NODE_ENV === 'production' 
-        ? 'wss://avai-backend-production.onrender.com/websocket'
-        : 'ws://localhost:3001/websocket'
+      process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8080/ws'
     );
 
     ws.onopen = async () => {

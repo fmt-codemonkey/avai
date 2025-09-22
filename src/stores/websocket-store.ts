@@ -100,10 +100,21 @@ export const useWebSocketStore = create<WebSocketState>((set, get) => {
       return;
     }
 
+    // Close existing connection if any
+    if (state.ws) {
+      try {
+        state.ws.close();
+        console.log('Closed existing WebSocket connection');
+      } catch {
+        // Silently handle close errors
+      }
+    }
+
     console.log('WebSocket: Attempting to connect to:', url);
     set({ 
       isConnecting: true, 
-      lastError: null 
+      lastError: null,
+      ws: null
     });
 
     try {

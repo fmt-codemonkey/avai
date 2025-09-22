@@ -21,10 +21,17 @@ export function useWebSocket(autoConnect: boolean = false) {
   } = useWebSocketStore();
   
   const hasAuthenticated = useRef(false);
+  const isAuthenticating = useRef(false);
 
   // Send authentication message after WebSocket connection
   const authenticate = useCallback(async () => {
-    if (!isConnected || hasAuthenticated.current) return;
+    if (!isConnected || hasAuthenticated.current || isAuthenticating.current) {
+      return;
+    }
+
+    // Set authenticating flag to prevent duplicate calls
+    isAuthenticating.current = true;
+    console.log('🔗 WebSocket connected, sending authentication...');
 
     try {
       let authMessage;
@@ -53,9 +60,12 @@ export function useWebSocket(autoConnect: boolean = false) {
       const success = sendMessage(authMessage as WSMessage);
       if (success) {
         hasAuthenticated.current = true;
+        console.log('✅ Authentication message sent successfully');
       }
     } catch (error) {
       console.error('❌ Authentication error:', error);
+    } finally {
+      isAuthenticating.current = false;
     }
   }, [isConnected, isSignedIn, user, getToken, sendMessage]);
 
@@ -79,14 +89,19 @@ export function useWebSocket(autoConnect: boolean = false) {
 
   // Authenticate after connection is established
   useEffect(() => {
-    if (isConnected && !hasAuthenticated.current) {
-      console.log('🔗 WebSocket connected, sending authentication...');
-      authenticate();
+    if (isConnected && !hasAuthenticated.current && !isAuthenticating.current) {
+      // Small delay to ensure connection is stable
+      const authTimeout = setTimeout(() => {
+        authenticate();
+      }, 100);
+      
+      return () => clearTimeout(authTimeout);
     }
     
-    // Reset authentication flag when disconnected
+    // Reset authentication flags when disconnected
     if (!isConnected) {
       hasAuthenticated.current = false;
+      isAuthenticating.current = false;
     }
   }, [isConnected, authenticate]);
 
