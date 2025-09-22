@@ -22,6 +22,7 @@ export function useWebSocket() {
   
   const hasAuthenticated = useRef(false);
   const isAuthenticating = useRef(false);
+  const messageQueue = useRef<WSMessage[]>([]);
 
   // Send authentication message after WebSocket connection
   const authenticate = useCallback(async () => {
@@ -84,6 +85,20 @@ export function useWebSocket() {
     };
   }, [isSignedIn, isConnected, disconnect]);
 
+  // Process queued messages when connected and authenticated
+  const processQueuedMessages = useCallback(() => {
+    if (isConnected && hasAuthenticated.current && messageQueue.current.length > 0) {
+      console.log('📤 Processing queued messages:', messageQueue.current.length);
+      const messages = [...messageQueue.current];
+      messageQueue.current = [];
+      
+      messages.forEach(message => {
+        console.log('📤 Sending queued message:', message);
+        sendMessage(message);
+      });
+    }
+  }, [isConnected, sendMessage]);
+
   // Authenticate after connection is established
   useEffect(() => {
     if (isConnected && !hasAuthenticated.current && !isAuthenticating.current) {
@@ -101,6 +116,13 @@ export function useWebSocket() {
       isAuthenticating.current = false;
     }
   }, [isConnected, authenticate]);
+
+  // Process queued messages after authentication
+  useEffect(() => {
+    if (isConnected && hasAuthenticated.current) {
+      processQueuedMessages();
+    }
+  }, [isConnected, processQueuedMessages]);
 
   // Subscribe to messages with callback
   const subscribeToMessages = useCallback(
@@ -126,14 +148,9 @@ export function useWebSocket() {
     }
   }, [isConnected, disconnect]);
 
-  // Send analysis request with error handling
+  // Send analysis request with lazy connection and message queuing
   const sendAnalysisRequest = useCallback(
     (prompt: string): boolean => {
-      if (!isConnected) {
-        console.error('WebSocket not connected');
-        return false;
-      }
-
       // Generate client ID for anonymous or authenticated users
       const clientId = user ? `avai_user_${user.id}` : `anon_${Math.random().toString(36).substr(2, 12)}`;
       
@@ -148,11 +165,32 @@ export function useWebSocket() {
         }
       };
 
-      console.log('Sending analysis request:', message);
-      const success = sendMessage(message);
-      return success;
+      // If connected and authenticated, send immediately
+      if (isConnected && hasAuthenticated.current) {
+        console.log('📤 Sending analysis request immediately:', message);
+        return sendMessage(message);
+      }
+
+      // If not connected, start connection and queue message
+      if (!isConnected && !isConnecting) {
+        console.log('🔗 Starting WebSocket connection and queuing message...');
+        messageQueue.current.push(message);
+        connect(WS_URL);
+        return true; // Return true because message is queued
+      }
+
+      // If connecting or connected but not authenticated, queue message
+      if (!hasAuthenticated.current) {
+        console.log('📥 Queuing message until authentication completes...');
+        messageQueue.current.push(message);
+        return true; // Return true because message is queued
+      }
+
+      // Fallback
+      console.error('WebSocket not connected and unable to queue');
+      return false;
     },
-    [user, isConnected, sendMessage]
+    [user, isConnected, isConnecting, connect, sendMessage]
   );
 
   return {

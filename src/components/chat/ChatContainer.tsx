@@ -73,24 +73,21 @@ export function ChatContainer({
 
   // Get input placeholder based on connection state
   const getInputPlaceholder = useCallback(() => {
-    if (isConnected) {
-      return isEmpty 
-        ? "Enter repository URL to start security audit..." 
-        : "Ask AVAI about your security findings...";
-    } else {
-      return "Reconnecting to AVAI...";
+    if (isEmpty) {
+      return "Message AVAI...";
     }
-  }, [isConnected, isEmpty]);
+    return "Send a message...";
+  }, [isEmpty]);
 
   // Enhanced message sending with WebSocket support and error handling
   const handleSendMessage = useCallback((content: string) => {
     if (!content.trim()) return;
 
-    // Add user message to realtime messages (handled by useRealTimeMessages)
-    addUserMessage(content.trim());
-
     // Send via WebSocket if connected with error handling
     if (isConnected && sendAnalysisRequest) {
+      // Add user message to realtime messages (only when using WebSocket)
+      addUserMessage(content.trim());
+      
       try {
         const success = sendAnalysisRequest(content.trim());
         if (!success) {
@@ -107,9 +104,11 @@ export function ChatContainer({
       }
     } else if (onSendMessage) {
       // Fallback to external handler when WebSocket not connected
+      // Let the external handler manage the user message to avoid duplication
       onSendMessage(content.trim());
     } else {
-      // No connection and no fallback - this shouldn't happen but handle gracefully
+      // No connection and no fallback - add user message and show error
+      addUserMessage(content.trim());
       console.warn('No WebSocket connection and no fallback handler available');
     }
   }, [isConnected, sendAnalysisRequest, onSendMessage, addUserMessage]);
@@ -123,7 +122,7 @@ export function ChatContainer({
       <SubtleConnectionIndicator />
       
       {/* Chat Messages Area - Fixed height with proper scrolling */}
-      <div className="flex-1 overflow-hidden relative">
+      <div className="flex-1 overflow-hidden">
         {isEmpty ? (
           <div className="h-full overflow-y-auto scrollbar-gutter-stable">
             <EmptyState onStartAudit={handleSendMessage} />
@@ -146,7 +145,7 @@ export function ChatContainer({
         <ChatInput 
           onSubmit={handleSendMessage}
           isLoading={isLoading}
-          disabled={!isConnected}
+          disabled={false}
           placeholder={getInputPlaceholder()}
         />
       </div>

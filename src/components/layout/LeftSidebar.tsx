@@ -579,22 +579,22 @@ export default function LeftSidebar({
                         "border transition-all duration-200",
                         chat.vulnerabilityCount === 0 
                           ? cn(
-                              // Secure badge - green theme (text only in normal state)
-                              "text-green-700",
-                              "dark:text-green-400",
-                              // Hover/active states (add border + background on interaction)
+                              // Secure badge - green theme (transparent background)
+                              "text-green-700 dark:text-green-400",
+                              "bg-transparent border-transparent",
+                              // Hover states (only border color visible)
                               currentChatId === chat.id 
-                                ? "shadow-sm border border-green-300 bg-green-50 dark:border-green-700/70 dark:bg-green-950/30" 
-                                : "group-hover:border group-hover:border-green-300 group-hover:bg-green-100/80 dark:group-hover:border-green-700/70 dark:group-hover:bg-green-950/50"
+                                ? "border-green-400 dark:border-green-500" 
+                                : "group-hover:border-green-400 dark:group-hover:border-green-500"
                             )
                           : cn(
-                              // Issues badge - red theme (text only in normal state)
-                              "text-red-700",
-                              "dark:text-red-400",
-                              // Hover/active states (add border + background on interaction)
+                              // Issues badge - red theme (transparent background)
+                              "text-red-700 dark:text-red-400",
+                              "bg-transparent border-transparent",
+                              // Hover states (only border color visible)
                               currentChatId === chat.id 
-                                ? "shadow-sm border border-red-300 bg-red-50 dark:border-red-700/70 dark:bg-red-950/30" 
-                                : "group-hover:border group-hover:border-red-300 group-hover:bg-red-100/80 dark:group-hover:border-red-700/70 dark:group-hover:bg-red-950/50"
+                                ? "border-red-400 dark:border-red-500" 
+                                : "group-hover:border-red-400 dark:group-hover:border-red-500"
                             )
                       )}>
                         {chat.vulnerabilityCount === 0 

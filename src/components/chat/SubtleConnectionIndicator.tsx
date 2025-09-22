@@ -70,11 +70,11 @@ export function SubtleConnectionIndicator() {
   };
 
   return (
-    <div className="flex items-center justify-center py-2 border-b border-border/30 bg-muted/20">
+    <div className="absolute top-2 left-1/2 transform -translate-x-1/2 z-20 flex items-center px-3 py-1 rounded-full bg-muted/95 backdrop-blur-sm border border-border/50 shadow-sm">
       <div className="flex items-center text-xs text-muted-foreground">
         <ConnectionDot isConnected={isConnected} reconnectAttempts={reconnectAttempts} />
         {connectionText && (
-          <span className="ml-2">
+          <span className="ml-2 font-medium">
             {connectionText}
           </span>
         )}
@@ -82,7 +82,7 @@ export function SubtleConnectionIndicator() {
           <Button 
             variant="ghost" 
             size="sm" 
-            className="ml-2 h-6 px-2 text-xs hover:bg-muted/50" 
+            className="ml-2 h-5 px-2 text-xs hover:bg-muted/50" 
             onClick={handleRefresh}
           >
             <RefreshCw className="w-3 h-3 mr-1" />

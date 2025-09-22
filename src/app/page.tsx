@@ -4,8 +4,7 @@ import { useState, useEffect } from "react";
 import LeftSidebar from "@/components/layout/LeftSidebar";
 import { RightSidebar } from "@/components/layout/RightSidebar";
 import { ChatContainer, type Message } from "@/components/chat/ChatContainer";
-import { ProgressCard } from "@/components/security/ProgressCard";
-import { VulnerabilityCard } from "@/components/security/VulnerabilityCard";
+
 
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
@@ -38,78 +37,7 @@ export default function AVAISinglePage() {
     return () => window.removeEventListener('resize', checkScreenSize);
   }, []);
 
-  // Mock vulnerability data
-  const mockVulnerability = {
-    id: "vuln-1",
-    title: "SQL Injection Vulnerability",
-    description: "User input is directly concatenated into SQL queries without proper sanitization",
-    severity: "critical" as const,
-    category: "Injection Attack",
-    cwe: "89",
-    cvss: 9.8,
-    location: {
-      file: "src/auth/login.ts",
-      line: 42,
-      column: 15,
-      function: "authenticateUser",
-    },
-    codeSnippet: `function authenticateUser(username, password) {
-  const query = "SELECT * FROM users WHERE username = '" + username + "' AND password = '" + password + "'";
-  return db.query(query);
-}`,
-    impact: "Attackers can bypass authentication, access sensitive data, or execute arbitrary database commands",
-    recommendation: "Use parameterized queries or prepared statements to prevent SQL injection",
-    fixes: [
-      {
-        title: "Use Parameterized Query",
-        description: "Replace string concatenation with parameterized queries",
-        code: `function authenticateUser(username, password) {
-  const query = "SELECT * FROM users WHERE username = ? AND password = ?";
-  return db.query(query, [username, password]);
-}`,
-        difficulty: "easy" as const,
-        estimatedTime: "5 minutes",
-      },
-    ],
-    references: [
-      { title: "OWASP SQL Injection", url: "https://owasp.org/www-community/attacks/SQL_Injection" },
-    ],
-    discoveredAt: "2 hours ago",
-    status: "open" as const,
-    assignee: "security-team",
-  };
 
-  // Mock progress data  
-  const mockProgress = {
-    title: "Security Audit in Progress",
-    description: "Analyzing repository for security vulnerabilities",
-    steps: [
-      {
-        id: "scan",
-        title: "Repository Scan",
-        description: "Scanning codebase for security vulnerabilities",
-        status: "completed" as const,
-        progress: 100,
-        duration: "1m 30s",
-      },
-      {
-        id: "analyze",
-        title: "Security Analysis", 
-        description: "Analyzing code patterns and dependencies",
-        status: "in-progress" as const,
-        progress: 75,
-      },
-      {
-        id: "review",
-        title: "Vulnerability Review",
-        description: "Categorizing and prioritizing findings",
-        status: "pending" as const,
-      },
-    ],
-    overallProgress: 65,
-    status: "scanning" as const,
-    estimatedTime: "2 minutes",
-  };
 
   const handleSendMessage = (content: string) => {
     // Add user message
@@ -124,19 +52,9 @@ export default function AVAISinglePage() {
     setMessages(prev => [...prev, userMessage]);
     setIsLoading(true);
 
-    // Detect if it's a GitHub URL
-    const isGitHubUrl = content.includes('github.com');
-    
-    // Simulate AI response
+    // Professional fallback response when WebSocket is unavailable
     setTimeout(() => {
-      let responseContent: string;
-      
-      if (isGitHubUrl) {
-        const repoName = content.split('/').slice(-2).join('/').replace('.git', '');
-        responseContent = `� **Initializing Security Audit**\n\nRepository: ${repoName}\nStarting comprehensive security analysis...\n\n📋 **Audit Scope:**\n• Static code analysis\n• Dependency vulnerability scanning\n• Authentication & authorization review\n• Input validation assessment\n• Information disclosure checks\n• Cryptographic implementation review\n\n**Status:** Cloning repository and analyzing codebase structure...`;
-      } else {
-        responseContent = `I'll help you with your security question: "${content}"\n\nTo perform a comprehensive security audit, please provide:\n• Repository URL (GitHub, GitLab, etc.)\n• Specific security concerns\n• Technology stack details\n\nFor immediate analysis, you can share a GitHub repository URL and I'll scan it for vulnerabilities.`;
-      }
+      const responseContent = `**AVAI Security Analysis Service**\n\n⚠️ **Service Temporarily Unavailable**\n\nOur AI security analysis service is currently experiencing connectivity issues. This may be due to:\n\n• Backend server maintenance\n• Network connectivity problems\n• High system load\n\n**What you can do:**\n\n1. **Try again in a few moments** - Service usually resumes quickly\n2. **Check your internet connection** - Ensure stable connectivity\n3. **Contact support** if the issue persists\n\n**For immediate assistance:**\n• Email: support@avai.security\n• Status page: status.avai.security\n\nWe apologize for the inconvenience and appreciate your patience while we resolve this issue.`;
 
       const aiMessage: Message = {
         id: `ai-${Date.now()}`,
@@ -147,53 +65,7 @@ export default function AVAISinglePage() {
       };
 
       setMessages(prev => [...prev, aiMessage]);
-
-      if (isGitHubUrl) {
-        // Show progress after a delay
-        setTimeout(() => {
-          const progressMessage: Message = {
-            id: `progress-${Date.now()}`,
-            sender: "ai",
-            content: <ProgressCard {...mockProgress} />,
-            timestamp: new Date().toISOString(),
-            type: "progress"
-          };
-
-          setMessages(prev => [...prev, progressMessage]);
-
-          // Open right sidebar with results
-          setRightSidebarOpen(true);
-
-          // Show vulnerability after more delay
-          setTimeout(() => {
-            const vulnMessage: Message = {
-              id: `vuln-${Date.now()}`,
-              sender: "ai",
-              content: <VulnerabilityCard {...mockVulnerability} />,
-              timestamp: new Date().toISOString(),
-              type: "vulnerability"
-            };
-
-            setMessages(prev => [...prev, vulnMessage]);
-            
-            // Final completion message
-            setTimeout(() => {
-              const completionMessage: Message = {
-                id: `completion-${Date.now()}`,
-                sender: "ai",
-                content: `✅ **Security Audit Complete**\n\n**Summary:**\n• 1 Critical vulnerability found\n• 2 Medium-risk issues identified  \n• 3 Low-priority recommendations\n• Overall security score: 78/100\n\n**Next Steps:**\n1. Address the SQL injection vulnerability immediately\n2. Review authentication implementation\n3. Update vulnerable dependencies\n4. Implement additional input validation\n\nDetailed findings are available in the security report panel. Would you like me to prioritize the fixes or explain any specific vulnerability?`,
-                timestamp: new Date().toISOString(),
-                type: "text"
-              };
-
-              setMessages(prev => [...prev, completionMessage]);
-              setIsLoading(false);
-            }, 2000);
-          }, 3000);
-        }, 2000);
-      } else {
-        setIsLoading(false);
-      }
+      setIsLoading(false);
     }, 1500);
   };
 
@@ -390,15 +262,15 @@ export default function AVAISinglePage() {
         <div className="flex-1 flex flex-col min-w-0 h-full bg-gradient-to-br from-background/50 to-background border-l border-r border-border/30 backdrop-blur-sm overflow-hidden">
           {currentChatId && messages.length > 0 ? (
             <>
-              {/* Chat Header */}
+              {/* Chat Header - Compact */}
               <div className="flex-shrink-0 border-b border-border/30 bg-gradient-to-r from-card/80 to-card/60 backdrop-blur-sm">
-                <div className="px-6 py-4">
+                <div className="px-6 py-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse"></div>
+                      <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
                       <div>
-                        <h2 className="font-semibold text-foreground">Security Analysis Chat</h2>
-                        <p className="text-sm text-muted-foreground">
+                        <h2 className="font-medium text-foreground">Security Analysis Chat</h2>
+                        <p className="text-xs text-muted-foreground">
                           {currentChatId === "chat-3" ? "Analysis in progress..." : "Analysis complete"}
                         </p>
                       </div>
@@ -409,7 +281,7 @@ export default function AVAISinglePage() {
                           variant="outline"
                           size="sm"
                           onClick={() => setRightSidebarOpen(!rightSidebarOpen)}
-                          className="text-muted-foreground hover:text-foreground"
+                          className="text-muted-foreground hover:text-foreground h-8 px-3 text-xs"
                         >
                           {rightSidebarOpen ? "Hide Reports" : "Show Reports"}
                         </Button>
@@ -425,7 +297,7 @@ export default function AVAISinglePage() {
                 onSendMessage={handleSendMessage}
                 isLoading={isLoading}
                 isEmpty={false}
-                className="flex-1"
+                className="flex-1 min-h-0"
                 isHistoricalLoad={isLoadingHistory}
               />
             </>

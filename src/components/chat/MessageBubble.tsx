@@ -200,7 +200,7 @@ export function MessageBubble({ message, className, onRetryConnection }: Message
               variant="ghost"
               size="sm"
               onClick={copyMessage}
-              className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50"
+              className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/60 hover:scale-105 transition-all duration-200 active:scale-95"
             >
               <Copy className="w-3 h-3 mr-1" />
               Copy
@@ -211,7 +211,7 @@ export function MessageBubble({ message, className, onRetryConnection }: Message
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                  className="h-7 px-2 text-xs text-muted-foreground hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-950/50 hover:scale-105 transition-all duration-200 active:scale-95 hover:border-green-200 dark:hover:border-green-800"
                 >
                   <ThumbsUp className="w-3 h-3 mr-1" />
                   Good
@@ -219,7 +219,7 @@ export function MessageBubble({ message, className, onRetryConnection }: Message
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                  className="h-7 px-2 text-xs text-muted-foreground hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/50 hover:scale-105 transition-all duration-200 active:scale-95 hover:border-red-200 dark:hover:border-red-800"
                 >
                   <ThumbsDown className="w-3 h-3 mr-1" />
                   Poor
