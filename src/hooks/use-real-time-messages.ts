@@ -143,17 +143,21 @@ export function useRealTimeMessages() {
     setMessages(prev => [...prev, systemMessage]);
   }, []);
 
-  // Monitor connection state changes
+  // Monitor connection state changes (but only after initial load)
   useEffect(() => {
     const previousState = lastConnectionStateRef.current;
     
-    if (isConnected && !previousState && reconnectAttempts > 0) {
-      // Connection restored after being disconnected
-      handleConnectionEvent('connection_restored');
-    } else if (!isConnected && previousState && lastError) {
-      // Connection lost
-      const eventType = mapConnectionEvent('close', 'network', reconnectAttempts);
-      handleConnectionEvent(eventType);
+    // Don't show connection messages on initial page load
+    // Only show them if there was a previous connection attempt
+    if (reconnectAttempts > 0 || previousState !== false) {
+      if (isConnected && !previousState && reconnectAttempts > 0) {
+        // Connection restored after being disconnected
+        handleConnectionEvent('connection_restored');
+      } else if (!isConnected && previousState && lastError) {
+        // Connection lost
+        const eventType = mapConnectionEvent('close', 'network', reconnectAttempts);
+        handleConnectionEvent(eventType);
+      }
     }
     
     // Update the ref with current state
@@ -420,6 +424,19 @@ export function useRealTimeMessages() {
     };
     
     setMessages(prev => [...prev, userMessage]);
+    
+    // Start thinking immediately when user sends a message (like Claude/ChatGPT)
+    setIsThinking(true);
+    setCurrentThinkingStep("🚀 Starting analysis...");
+    
+    // Set timeout to prevent infinite thinking state (30 seconds)
+    const timeout = setTimeout(() => {
+      console.warn('User message thinking timeout - stopping thinking indicator');
+      setIsThinking(false);
+      setCurrentThinkingStep("");
+    }, 30000);
+    
+    setThinkingTimeout(timeout);
   }, []);
 
   // Add connection message manually (for retry functionality)

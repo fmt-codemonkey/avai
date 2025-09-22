@@ -29,6 +29,7 @@ interface MessageBubbleProps {
 export function MessageBubble({ message, className, onRetryConnection }: MessageBubbleProps) {
   const { sender, content, timestamp, type = "text", metadata } = message;
   const [showActions, setShowActions] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
 
   const formatTime = (timestamp: string) => {
     return new Date(timestamp).toLocaleTimeString('en-US', { 
@@ -38,9 +39,38 @@ export function MessageBubble({ message, className, onRetryConnection }: Message
     });
   };
 
-  const copyMessage = () => {
-    if (typeof content === 'string') {
-      navigator.clipboard.writeText(content);
+  const copyMessage = async () => {
+    try {
+      if (typeof content === 'string') {
+        await navigator.clipboard.writeText(content);
+        setIsCopied(true);
+        console.log('✅ Message copied to clipboard');
+        
+        // Reset the copied state after 2 seconds
+        setTimeout(() => {
+          setIsCopied(false);
+        }, 2000);
+      } else {
+        console.warn('Cannot copy non-string content');
+      }
+    } catch (error) {
+      console.error('Failed to copy message:', error);
+      // Fallback for older browsers
+      try {
+        const textArea = document.createElement('textarea');
+        textArea.value = typeof content === 'string' ? content : '';
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        setIsCopied(true);
+        setTimeout(() => {
+          setIsCopied(false);
+        }, 2000);
+        console.log('✅ Message copied using fallback method');
+      } catch (fallbackError) {
+        console.error('Fallback copy method also failed:', fallbackError);
+      }
     }
   };
 
@@ -97,7 +127,7 @@ export function MessageBubble({ message, className, onRetryConnection }: Message
   // User messages (right-aligned, simple)
   if (sender === 'user') {
     return (
-      <div className={cn("flex justify-end mb-6", className)}>
+      <div className={cn("flex justify-end mb-6 message-enter-right", className)}>
         <div className="flex items-start gap-3 max-w-[85%]">
           <div className="flex flex-col items-end">
             <div className="bg-primary text-primary-foreground rounded-2xl px-4 py-3 max-w-full">
@@ -126,7 +156,10 @@ export function MessageBubble({ message, className, onRetryConnection }: Message
   // AI messages (left-aligned, Claude/ChatGPT style)
   return (
     <div 
-      className={cn("flex justify-start mb-6 group", className)}
+      className={cn(
+        "flex justify-start mb-6 group message-enter-left", 
+        className
+      )}
       onMouseEnter={() => setShowActions(true)}
       onMouseLeave={() => setShowActions(false)}
     >
@@ -200,10 +233,15 @@ export function MessageBubble({ message, className, onRetryConnection }: Message
               variant="ghost"
               size="sm"
               onClick={copyMessage}
-              className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/60 hover:scale-105 transition-all duration-200 active:scale-95"
+              className={cn(
+                "h-7 px-2 text-xs hover:scale-105 transition-all duration-200 active:scale-95",
+                isCopied 
+                  ? "text-green-600" 
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+              )}
             >
               <Copy className="w-3 h-3 mr-1" />
-              Copy
+              {isCopied ? "Copied!" : "Copy"}
             </Button>
             
             {sender === 'ai' && (
@@ -211,7 +249,7 @@ export function MessageBubble({ message, className, onRetryConnection }: Message
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-7 px-2 text-xs text-muted-foreground hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-950/50 hover:scale-105 transition-all duration-200 active:scale-95 hover:border-green-200 dark:hover:border-green-800"
+                  className="h-7 px-2 text-xs text-muted-foreground hover:text-green-600 hover:scale-105 transition-all duration-200 active:scale-95"
                 >
                   <ThumbsUp className="w-3 h-3 mr-1" />
                   Good
@@ -219,7 +257,7 @@ export function MessageBubble({ message, className, onRetryConnection }: Message
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-7 px-2 text-xs text-muted-foreground hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/50 hover:scale-105 transition-all duration-200 active:scale-95 hover:border-red-200 dark:hover:border-red-800"
+                  className="h-7 px-2 text-xs text-muted-foreground hover:text-red-600 hover:scale-105 transition-all duration-200 active:scale-95"
                 >
                   <ThumbsDown className="w-3 h-3 mr-1" />
                   Poor

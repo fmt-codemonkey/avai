@@ -1,66 +1,60 @@
 "use client";
 
+import { useState, useEffect } from 'react';
 import { cn } from "@/lib/utils";
-import { Shield, Loader2 } from "lucide-react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { useWebSocketStore } from "@/stores/websocket-store";
 
 interface TypingIndicatorProps {
   className?: string;
-  message?: string;
   currentStep?: string;
 }
 
 export function TypingIndicator({ 
-  className, 
-  message = "AVAI is thinking...",
+  className,
   currentStep
 }: TypingIndicatorProps) {
-  const { isConnected, isConnecting } = useWebSocketStore();
+  const [messageIndex, setMessageIndex] = useState(0);
+  
+  // Elegant, minimal status messages
+  const thinkingMessages = [
+    "Thinking...",
+    "Analyzing...",
+    "Processing...",
+    "Almost ready..."
+  ];
 
-  // Determine the appropriate message based on connection status
-  const getStatusMessage = () => {
-    if (isConnecting) return "Connecting to AVAI...";
-    if (!isConnected) return "Reconnecting to AVAI...";
-    // Use current step if available, otherwise fallback to generic message
-    return currentStep || message;
-  };
+  // Rotate through messages elegantly
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setMessageIndex(prev => (prev + 1) % thinkingMessages.length);
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [thinkingMessages.length]);
+
+  // Use custom step if provided, otherwise use rotating messages
+  const displayMessage = currentStep || thinkingMessages[messageIndex];
 
   return (
-    <div className={cn("flex justify-start mb-6", className)}>
-      <div className="flex items-start gap-3">
-        <Avatar className="w-7 h-7 flex-shrink-0">
-          <AvatarFallback className="bg-gradient-to-br from-primary/20 to-blue-500/20 text-primary text-xs">
-            {isConnecting ? (
-              <Loader2 className="w-3 h-3 animate-spin" />
-            ) : (
-              <Shield className="w-3 h-3" />
-            )}
-          </AvatarFallback>
-        </Avatar>
-        
-        <div className="flex-1 min-w-0">
-          {/* AI Name */}
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-sm font-semibold text-foreground">AVAI</span>
-          </div>
+    <div className={cn("flex items-start gap-3 py-4 thinking-entrance", className)}>
+      {/* Minimal, elegant avatar */}
+      <div className="w-6 h-6 rounded-full bg-muted/40 flex items-center justify-center flex-shrink-0 mt-1 transition-premium">
+        <div className="w-2 h-2 rounded-full bg-primary/60" />
+      </div>
 
-          {/* Professional thinking indicator like manus.im */}
-          <div className="bg-muted/20 border border-border/30 rounded-lg px-3 py-2 max-w-fit">
-            <div className="flex items-center gap-2">
-              {/* Small animated thinking dots */}
-              <div className="flex items-center gap-0.5">
-                <div className="w-1.5 h-1.5 bg-primary/60 rounded-full animate-pulse [animation-delay:-0.3s]"></div>
-                <div className="w-1.5 h-1.5 bg-primary/60 rounded-full animate-pulse [animation-delay:-0.15s]"></div>
-                <div className="w-1.5 h-1.5 bg-primary/60 rounded-full animate-pulse"></div>
-              </div>
-              
-              {/* Professional status message - small and subtle */}
-              <span className="text-xs text-muted-foreground/80 font-medium">
-                {getStatusMessage()}
-              </span>
-            </div>
+      {/* Ultra-clean thinking bubble */}
+      <div className="flex-1 max-w-3xl">
+        <div className="inline-flex items-center gap-3 px-4 py-3 bg-muted/30 rounded-2xl rounded-tl-md border border-border/20 hover-lift">
+          {/* Perfect thinking dots */}
+          <div className="flex items-center gap-1">
+            <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/50 thinking-dot" />
+            <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/50 thinking-dot" />
+            <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/50 thinking-dot" />
           </div>
+          
+          {/* Clean, minimal text */}
+          <span className="text-sm text-muted-foreground/90 font-medium transition-premium">
+            {displayMessage}
+          </span>
         </div>
       </div>
     </div>

@@ -83,11 +83,34 @@ export function ChatContainer({
   const handleSendMessage = useCallback((content: string) => {
     if (!content.trim()) return;
 
+    // Add user message immediately for instant feedback (like Claude/ChatGPT)
+    addUserMessage(content.trim());
+
+    // Optional: Play subtle send sound for better UX
+    if (typeof window !== 'undefined' && 'AudioContext' in window) {
+      try {
+        const audioContext = new AudioContext();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(400, audioContext.currentTime + 0.1);
+        
+        gainNode.gain.setValueAtTime(0.05, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+        
+        oscillator.start();
+        oscillator.stop(audioContext.currentTime + 0.1);
+      } catch {
+        // Ignore audio errors - not critical
+      }
+    }
+
     // Send via WebSocket if connected with error handling
     if (isConnected && sendAnalysisRequest) {
-      // Add user message to realtime messages (only when using WebSocket)
-      addUserMessage(content.trim());
-      
       try {
         const success = sendAnalysisRequest(content.trim());
         if (!success) {
@@ -104,11 +127,9 @@ export function ChatContainer({
       }
     } else if (onSendMessage) {
       // Fallback to external handler when WebSocket not connected
-      // Let the external handler manage the user message to avoid duplication
       onSendMessage(content.trim());
     } else {
-      // No connection and no fallback - add user message and show error
-      addUserMessage(content.trim());
+      // No connection and no fallback - user message already added, show warning
       console.warn('No WebSocket connection and no fallback handler available');
     }
   }, [isConnected, sendAnalysisRequest, onSendMessage, addUserMessage]);

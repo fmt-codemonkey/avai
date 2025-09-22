@@ -1,14 +1,13 @@
 
 
 import { useEffect, useCallback, useRef } from 'react';
-import { useUser, useAuth } from '@clerk/nextjs';
+import { useUser } from '@clerk/nextjs';
 import { useWebSocketStore, WSMessage } from '@/stores/websocket-store';
 
 const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'wss://websocket.avai.life/ws';
 
 export function useWebSocket() {
   const { user, isSignedIn } = useUser();
-  const { getToken } = useAuth();
   const {
     isConnected,
     isConnecting,
@@ -20,70 +19,34 @@ export function useWebSocket() {
     subscribe,
   } = useWebSocketStore();
   
-  const hasAuthenticated = useRef(false);
-  const isAuthenticating = useRef(false);
   const messageQueue = useRef<WSMessage[]>([]);
-  const hasTriedInitialConnection = useRef(false);
-
-  // Send authentication message after WebSocket connection
-  const authenticate = useCallback(async () => {
-    if (!isConnected || hasAuthenticated.current || isAuthenticating.current) {
-      return;
-    }
-
-    // Set authenticating flag to prevent duplicate calls
-    isAuthenticating.current = true;
-    console.log('🔗 WebSocket connected, sending authentication...');
-
-    try {
-      let authMessage;
-      
-      if (isSignedIn && user) {
-        // Get Clerk JWT token and send it
-        const token = await getToken();
-        authMessage = {
-          type: 'authenticate',
-          token: token,
-          userId: user.id,
-          anonymous: false,
-          timestamp: new Date().toISOString()
-        };
-        console.log('🔐 Authenticating with Clerk token for user:', user.id);
-      } else {
-        // Fallback to anonymous
-        authMessage = {
-          type: 'authenticate', 
-          anonymous: true,
-          timestamp: new Date().toISOString()
-        };
-        console.log('🔐 Authenticating anonymously');
-      }
-
-      const success = sendMessage(authMessage as WSMessage);
-      if (success) {
-        hasAuthenticated.current = true;
-        console.log('✅ Authentication message sent successfully');
-      }
-    } catch (error) {
-      console.error('❌ Authentication error:', error);
-    } finally {
-      isAuthenticating.current = false;
-    }
-  }, [isConnected, isSignedIn, user, getToken, sendMessage]);
-
-  // Auto-connect only once on mount (like Claude/ChatGPT)
+  
+  // Generate persistent client ID using Clerk user ID when available
+  const persistentClientId = useRef<string>('');
+  
+  // Initialize client ID using Clerk user data
   useEffect(() => {
-    if (!hasTriedInitialConnection.current) {
-      hasTriedInitialConnection.current = true;
-      console.log('🚀 Initial WebSocket connection attempt...');
-      
-      try {
-        connect(WS_URL);
-      } catch (error) {
-        console.warn('Initial WebSocket connection failed (non-critical):', error);
-      }
+    if (user?.id && !persistentClientId.current.includes(user.id)) {
+      // Use Clerk user ID for authenticated users (persistent across sessions)
+      persistentClientId.current = `avai_user_${user.id}`;
+      console.log('🆔 Using Clerk user ID as client ID:', persistentClientId.current);
+    } else if (!user && !persistentClientId.current) {
+      // Generate anonymous ID for non-authenticated users (session-persistent)
+      persistentClientId.current = `anon_${Math.random().toString(36).substr(2, 12)}`;
+      console.log('🆔 Generated anonymous client ID:', persistentClientId.current);
     }
-  }, [connect]); // Only include connect, runs once on mount
+  }, [user]);
+
+  // Auto-connect immediately when page loads (but don't show connection messages in UI)
+  useEffect(() => {
+    console.log('🚀 Initial WebSocket connection attempt...');
+    
+    try {
+      connect(WS_URL);
+    } catch (error) {
+      console.warn('Initial WebSocket connection failed (non-critical):', error);
+    }
+  }, [connect]); // Runs once on mount
 
   // Only disconnect when user signs out
   useEffect(() => {
@@ -100,9 +63,9 @@ export function useWebSocket() {
     };
   }, [isSignedIn, isConnected, disconnect]);
 
-  // Process queued messages when connected and authenticated
+  // Process queued messages when connected
   const processQueuedMessages = useCallback(() => {
-    if (isConnected && hasAuthenticated.current && messageQueue.current.length > 0) {
+    if (isConnected && messageQueue.current.length > 0) {
       console.log('📤 Processing queued messages:', messageQueue.current.length);
       const messages = [...messageQueue.current];
       messageQueue.current = [];
@@ -114,27 +77,9 @@ export function useWebSocket() {
     }
   }, [isConnected, sendMessage]);
 
-  // Authenticate after connection is established
+  // Process queued messages when connected
   useEffect(() => {
-    if (isConnected && !hasAuthenticated.current && !isAuthenticating.current) {
-      // Small delay to ensure connection is stable
-      const authTimeout = setTimeout(() => {
-        authenticate();
-      }, 100);
-      
-      return () => clearTimeout(authTimeout);
-    }
-    
-    // Reset authentication flags when disconnected
-    if (!isConnected) {
-      hasAuthenticated.current = false;
-      isAuthenticating.current = false;
-    }
-  }, [isConnected, authenticate]);
-
-  // Process queued messages after authentication
-  useEffect(() => {
-    if (isConnected && hasAuthenticated.current) {
+    if (isConnected) {
       processQueuedMessages();
     }
   }, [isConnected, processQueuedMessages]);
@@ -166,46 +111,45 @@ export function useWebSocket() {
   // Send analysis request with lazy connection and message queuing
   const sendAnalysisRequest = useCallback(
     (prompt: string): boolean => {
-      // Generate client ID for anonymous or authenticated users
-      const clientId = user ? `avai_user_${user.id}` : `anon_${Math.random().toString(36).substr(2, 12)}`;
+      // Use Clerk-based persistent client ID (same for entire session)
+      const clientId = persistentClientId.current;
+      
+      if (!clientId) {
+        console.error('No client ID available - cannot send message');
+        return false;
+      }
       
       const message: WSMessage = {
         type: 'analysis_request',
         prompt,
         client_id: clientId,
         session_data: {
-          session_id: clientId,
+          session_id: clientId, // Same session ID for all messages from this client
           user_id: user?.id || null,
           is_anonymous: !user
         }
       };
 
-      // If connected and authenticated, send immediately
-      if (isConnected && hasAuthenticated.current) {
+      // If connected, send immediately
+      if (isConnected) {
         console.log('📤 Sending analysis request immediately:', message);
         return sendMessage(message);
       }
 
       // If not connected, start connection and queue message
-      if (!isConnected && !isConnecting) {
+      if (!isConnecting) {
         console.log('🔗 Starting WebSocket connection and queuing message...');
         messageQueue.current.push(message);
         connect(WS_URL);
         return true; // Return true because message is queued
       }
 
-      // If connecting or connected but not authenticated, queue message
-      if (!hasAuthenticated.current) {
-        console.log('📥 Queuing message until authentication completes...');
-        messageQueue.current.push(message);
-        return true; // Return true because message is queued
-      }
-
-      // Fallback
-      console.error('WebSocket not connected and unable to queue');
-      return false;
+      // If connecting, queue message
+      console.log('📥 Queuing message until connection completes...');
+      messageQueue.current.push(message);
+      return true; // Return true because message is queued
     },
-    [user, isConnected, isConnecting, connect, sendMessage]
+    [user, isConnected, isConnecting, connect, sendMessage, persistentClientId]
   );
 
   return {
