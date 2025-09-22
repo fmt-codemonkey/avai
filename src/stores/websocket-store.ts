@@ -3,7 +3,7 @@
 import { create } from "zustand";
 
 export interface WSMessage {
-  type: 'analysis_request' | 'analysis_start' | 'log' | 'analysis_complete' | 'response';
+  type: 'analysis_request' | 'analysis_start' | 'log' | 'analysis_complete' | 'response' | 'authenticate' | 'heartbeat';
   prompt?: string;
   client_id?: string;
   analysis_id?: string;
@@ -25,6 +25,11 @@ export interface WSMessage {
   session_id?: string;
   processing_time?: number;
   timestamp: string;
+  
+  // Authentication fields
+  token?: string | null;
+  userId?: string;
+  anonymous?: boolean;
 }
 
 interface WebSocketState {

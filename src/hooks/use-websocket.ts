@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useCallback } from 'react';
-import { useUser } from '@clerk/nextjs';
+import { useEffect, useCallback, useRef } from 'react';
+import { useUser, useAuth } from '@clerk/nextjs';
 import { useWebSocketStore, WSMessage } from '@/stores/websocket-store';
 
 const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'wss://avai-backend.onrender.com/ws';
 
 export function useWebSocket(autoConnect: boolean = false) {
   const { user, isSignedIn } = useUser();
+  const { getToken } = useAuth();
   const {
     isConnected,
     isConnecting,
@@ -18,6 +19,45 @@ export function useWebSocket(autoConnect: boolean = false) {
     sendMessage,
     subscribe,
   } = useWebSocketStore();
+  
+  const hasAuthenticated = useRef(false);
+
+  // Send authentication message after WebSocket connection
+  const authenticate = useCallback(async () => {
+    if (!isConnected || hasAuthenticated.current) return;
+
+    try {
+      let authMessage;
+      
+      if (isSignedIn && user) {
+        // Get Clerk JWT token and send it
+        const token = await getToken();
+        authMessage = {
+          type: 'authenticate',
+          token: token,
+          userId: user.id,
+          anonymous: false,
+          timestamp: new Date().toISOString()
+        };
+        console.log('🔐 Authenticating with Clerk token for user:', user.id);
+      } else {
+        // Fallback to anonymous
+        authMessage = {
+          type: 'authenticate', 
+          anonymous: true,
+          timestamp: new Date().toISOString()
+        };
+        console.log('🔐 Authenticating anonymously');
+      }
+
+      const success = sendMessage(authMessage as WSMessage);
+      if (success) {
+        hasAuthenticated.current = true;
+      }
+    } catch (error) {
+      console.error('❌ Authentication error:', error);
+    }
+  }, [isConnected, isSignedIn, user, getToken, sendMessage]);
 
   // Auto-connect when user is authenticated (optional)
   useEffect(() => {
@@ -36,6 +76,19 @@ export function useWebSocket(autoConnect: boolean = false) {
       }
     };
   }, [autoConnect, isSignedIn, user, isConnected, isConnecting, connect, disconnect]);
+
+  // Authenticate after connection is established
+  useEffect(() => {
+    if (isConnected && !hasAuthenticated.current) {
+      console.log('🔗 WebSocket connected, sending authentication...');
+      authenticate();
+    }
+    
+    // Reset authentication flag when disconnected
+    if (!isConnected) {
+      hasAuthenticated.current = false;
+    }
+  }, [isConnected, authenticate]);
 
   // Subscribe to messages with callback
   const subscribeToMessages = useCallback(
