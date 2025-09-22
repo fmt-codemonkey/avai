@@ -4,7 +4,7 @@ import { useEffect, useCallback, useRef } from 'react';
 import { useUser, useAuth } from '@clerk/nextjs';
 import { useWebSocketStore, WSMessage } from '@/stores/websocket-store';
 
-const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'wss://avai-backend.onrender.com/ws';
+const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'wss://websocket.avai.life/ws';
 
 export function useWebSocket(autoConnect: boolean = false) {
   const { user, isSignedIn } = useUser();
@@ -132,21 +132,23 @@ export function useWebSocket(autoConnect: boolean = false) {
   // Send analysis request with error handling
   const sendAnalysisRequest = useCallback(
     (prompt: string): boolean => {
-      if (!user) {
-        console.error('User not authenticated');
-        return false;
-      }
-
       if (!isConnected) {
         console.error('WebSocket not connected');
         return false;
       }
 
+      // Generate client ID for anonymous or authenticated users
+      const clientId = user ? `avai_user_${user.id}` : `anon_${Math.random().toString(36).substr(2, 12)}`;
+      
       const message: WSMessage = {
         type: 'analysis_request',
         prompt,
-        client_id: `avai_user_${user.id}`,
-        timestamp: new Date().toISOString(),
+        client_id: clientId,
+        session_data: {
+          session_id: clientId,
+          user_id: user?.id || null,
+          is_anonymous: !user
+        }
       };
 
       console.log('Sending analysis request:', message);

@@ -9,22 +9,21 @@ export interface WSMessage {
   analysis_id?: string;
   level?: 'info' | 'success' | 'error';
   message?: string;
-  result?: {
-    ai_response?: string;
-    analysis_data?: Record<string, unknown>;
-    [key: string]: unknown;
+  
+  // New backend response format
+  status?: 'success' | 'error' | 'processing';
+  response?: string; // JSON string containing the actual response
+  request_id?: string;
+  processing_time?: string;
+  source?: string;
+  timestamp?: string;
+  
+  // Session data for requests
+  session_data?: {
+    session_id: string;
+    user_id: string | null;
+    is_anonymous: boolean;
   };
-  // New response format
-  response?: {
-    final_result?: {
-      success: boolean;
-      response: string;
-      confidence?: number;
-    };
-  };
-  session_id?: string;
-  processing_time?: number;
-  timestamp: string;
   
   // Authentication fields
   token?: string | null;
@@ -57,7 +56,7 @@ interface WebSocketState {
   reset: () => void;
 }
 
-const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'wss://avai-backend.onrender.com/ws';
+const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'wss://websocket.avai.life/ws';
 const MAX_MESSAGE_HISTORY = 50;
 const MAX_RECONNECT_ATTEMPTS = 5;
 const RECONNECT_INTERVALS = [1000, 2000, 4000, 8000, 16000]; // Exponential backoff

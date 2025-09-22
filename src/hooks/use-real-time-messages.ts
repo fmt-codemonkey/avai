@@ -18,6 +18,8 @@ interface ProcessedMessage {
     confidence?: number;
     processingTime?: number;
     sessionId?: string;
+    requestId?: string;
+    source?: string;
   };
 }
 
@@ -207,33 +209,21 @@ export function useRealTimeMessages() {
           setIsThinking(false);
           setCurrentThinkingStep("");
           
-          if (wsMessage.result?.ai_response) {
-            const cleanResponse: ProcessedMessage = {
-              id: `ai-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-              content: wsMessage.result.ai_response,
-              sender: 'ai',
-              type: 'text',
-              timestamp: wsMessage.timestamp,
-            };
-            
-            setMessages(prev => [...prev, cleanResponse]);
-            console.log('✅ Analysis completed - showing clean response (legacy format)');
-          } else {
-            // Fallback message if no AI response
-            const fallbackResponse: ProcessedMessage = {
-              id: `ai-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-              content: 'Analysis completed successfully, but no detailed response was provided.',
-              sender: 'ai',
-              type: 'text',
-              timestamp: wsMessage.timestamp,
-            };
-            
-            setMessages(prev => [...prev, fallbackResponse]);
-          }
+          // Legacy format - just show completion message
+          const completionResponse: ProcessedMessage = {
+            id: `ai-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            content: 'Analysis completed successfully.',
+            sender: 'ai',
+            type: 'text',
+            timestamp: wsMessage.timestamp || new Date().toISOString(),
+          };
+          
+          setMessages(prev => [...prev, completionResponse]);
+          console.log('✅ Analysis completed (legacy format)');
           break;
 
-        case 'response' as WSMessage['type']:
-          // New response format - handle final AI response
+        case 'response':
+          // New backend response format - handle final AI response
           // Clear thinking timeout
           if (thinkingTimeout) {
             clearTimeout(thinkingTimeout);
@@ -245,31 +235,55 @@ export function useRealTimeMessages() {
           setCurrentThinkingStep("");
           
           // Check if response was successful
-          if (wsMessage.response?.final_result?.success) {
-            const aiResponse = wsMessage.response.final_result.response;
-            const confidence = wsMessage.response.final_result.confidence;
-            const processingTime = wsMessage.processing_time;
-            
-            // Use clean response content (metadata will be shown separately in UI)
-            const successResponse: ProcessedMessage = {
-              id: `ai-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-              content: aiResponse,
-              sender: 'ai',
-              type: 'text',
-              timestamp: wsMessage.timestamp,
-              metadata: {
-                confidence,
+          if (wsMessage.status === 'success' && wsMessage.response) {
+            try {
+              // Parse the JSON response string
+              const parsedResponse = JSON.parse(wsMessage.response);
+              const aiResponse = parsedResponse.message;
+              const processingTime = wsMessage.processing_time;
+              const sessionId = parsedResponse.session_id;
+              
+              // Use clean response content (metadata will be shown separately in UI)
+              const successResponse: ProcessedMessage = {
+                id: `ai-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                content: aiResponse,
+                sender: 'ai',
+                type: 'text',
+                timestamp: wsMessage.timestamp || new Date().toISOString(),
+                metadata: {
+                  processingTime: parseFloat(processingTime?.replace('s', '') || '0'),
+                  sessionId,
+                  requestId: wsMessage.request_id,
+                  source: wsMessage.source
+                }
+              };
+              
+              setMessages(prev => [...prev, successResponse]);
+              console.log('✅ AI Response received successfully', {
                 processingTime,
-                sessionId: wsMessage.session_id
-              }
-            };
-            
-            setMessages(prev => [...prev, successResponse]);
-            console.log('✅ AI Response received successfully', {
-              confidence,
-              processingTime,
-              sessionId: wsMessage.session_id
-            });
+                sessionId,
+                requestId: wsMessage.request_id,
+                source: wsMessage.source
+              });
+            } catch (parseError) {
+              console.error('Failed to parse response JSON:', parseError);
+              
+              // Show raw response if JSON parsing fails
+              const fallbackResponse: ProcessedMessage = {
+                id: `ai-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                content: wsMessage.response,
+                sender: 'ai',
+                type: 'text', 
+                timestamp: wsMessage.timestamp || new Date().toISOString(),
+                metadata: {
+                  processingTime: parseFloat(wsMessage.processing_time?.replace('s', '') || '0'),
+                  requestId: wsMessage.request_id,
+                  source: wsMessage.source
+                }
+              };
+              
+              setMessages(prev => [...prev, fallbackResponse]);
+            }
           } else {
             // Handle failed response
             const errorResponse: ProcessedMessage = {
@@ -277,15 +291,19 @@ export function useRealTimeMessages() {
               content: 'I encountered an issue processing your request. Please try again or rephrase your question.',
               sender: 'system',
               type: 'error',
-              timestamp: wsMessage.timestamp,
+              timestamp: wsMessage.timestamp || new Date().toISOString(),
               metadata: {
                 isConnectionMessage: false,
-                canRetry: true
+                canRetry: true,
+                requestId: wsMessage.request_id
               }
             };
             
             setMessages(prev => [...prev, errorResponse]);
-            console.warn('❌ AI Response failed', wsMessage.response?.final_result);
+            console.warn('❌ AI Response failed', {
+              status: wsMessage.status,
+              requestId: wsMessage.request_id
+            });
           }
           break;
 
