@@ -530,13 +530,14 @@ export default function LeftSidebar({
                   // Active state (like Claude AI)
                   currentChatId === chat.id 
                     ? "bg-primary/10 text-foreground shadow-sm border-l-2 border-primary" 
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
+                    : "text-muted-foreground hover:text-foreground hover:bg-transparent dark:hover:bg-[#0e0e0ead]",
                   
-                  // Hover effects
-                  "hover:shadow-sm",
+                  // Hover effects with glow shadow in dark mode
+                  "hover:shadow-sm dark:hover:shadow-lg dark:hover:shadow-primary/20",
+                  "hover:border-l-2 hover:border-primary/30",
                   
                   // Smooth transitions
-                  "transition-colors duration-200"
+                  "transition-all duration-300 ease-out"
                 )}
               >
                 <div className="space-y-2">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useWebSocket } from './use-websocket';
 import { useProfessionalErrorHandler } from './use-professional-error-handler';
 import { WSMessage } from '@/stores/websocket-store';
@@ -119,7 +119,7 @@ export function useRealTimeMessages() {
   const [isThinking, setIsThinking] = useState(false);
   const [messages, setMessages] = useState<ProcessedMessage[]>([]);
   const [thinkingTimeout, setThinkingTimeout] = useState<NodeJS.Timeout | null>(null);
-  const [lastConnectionState, setLastConnectionState] = useState<boolean>(false);
+  const lastConnectionStateRef = useRef<boolean>(false);
   const [currentThinkingStep, setCurrentThinkingStep] = useState<string>("");
 
   // Handle connection event messages
@@ -145,17 +145,20 @@ export function useRealTimeMessages() {
 
   // Monitor connection state changes
   useEffect(() => {
-    if (isConnected && !lastConnectionState && reconnectAttempts > 0) {
+    const previousState = lastConnectionStateRef.current;
+    
+    if (isConnected && !previousState && reconnectAttempts > 0) {
       // Connection restored after being disconnected
       handleConnectionEvent('connection_restored');
-    } else if (!isConnected && lastConnectionState && lastError) {
+    } else if (!isConnected && previousState && lastError) {
       // Connection lost
       const eventType = mapConnectionEvent('close', 'network', reconnectAttempts);
       handleConnectionEvent(eventType);
     }
     
-    setLastConnectionState(isConnected);
-  }, [isConnected, lastConnectionState, lastError, reconnectAttempts, handleConnectionEvent]);
+    // Update the ref with current state
+    lastConnectionStateRef.current = isConnected;
+  }, [isConnected, lastError, reconnectAttempts, handleConnectionEvent]);
 
   const handleMessage = useCallback((wsMessage: WSMessage) => {
     console.log('Received WebSocket message:', wsMessage);
@@ -308,7 +311,65 @@ export function useRealTimeMessages() {
           break;
 
         default:
-          console.log('Unhandled message type:', wsMessage.type);
+          // Handle messages without type field but with status/response (your server format)
+          if (!wsMessage.type && wsMessage.status && wsMessage.response) {
+            console.log('Processing response without type field (server format)');
+            
+            // Clear thinking indicators
+            if (thinkingTimeout) {
+              clearTimeout(thinkingTimeout);
+              setThinkingTimeout(null);
+            }
+            setIsThinking(false);
+            setCurrentThinkingStep("");
+            
+            if (wsMessage.status === 'success' && wsMessage.response) {
+              try {
+                const parsedResponse = JSON.parse(wsMessage.response);
+                const aiResponse = parsedResponse.message;
+                
+                const successResponse: ProcessedMessage = {
+                  id: `ai-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                  content: aiResponse,
+                  sender: 'ai',
+                  type: 'text',
+                  timestamp: wsMessage.timestamp || new Date().toISOString(),
+                  metadata: {
+                    processingTime: parseFloat(wsMessage.processing_time?.replace('s', '') || '0'),
+                    sessionId: parsedResponse.session_id,
+                    requestId: wsMessage.request_id,
+                    source: wsMessage.source
+                  }
+                };
+                
+                setMessages(prev => [...prev, successResponse]);
+                console.log('✅ AI Response received successfully (server format)');
+              } catch (error) {
+                console.error('Failed to parse server response:', error);
+                const errorResponse: ProcessedMessage = {
+                  id: `error-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                  content: 'Failed to process AI response. Please try again.',
+                  sender: 'system',
+                  type: 'error',
+                  timestamp: new Date().toISOString(),
+                  metadata: { isConnectionMessage: false, canRetry: true }
+                };
+                setMessages(prev => [...prev, errorResponse]);
+              }
+            } else {
+              const errorResponse: ProcessedMessage = {
+                id: `error-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                content: wsMessage.response || 'Unknown error occurred',
+                sender: 'system',
+                type: 'error',
+                timestamp: new Date().toISOString(),
+                metadata: { isConnectionMessage: false, canRetry: true }
+              };
+              setMessages(prev => [...prev, errorResponse]);
+            }
+          } else {
+            console.log('Unhandled message type:', wsMessage.type);
+          }
       }
     } catch (error) {
       console.error('Error processing WebSocket message:', error);

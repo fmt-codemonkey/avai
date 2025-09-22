@@ -64,6 +64,8 @@ const RECONNECT_INTERVALS = [1000, 2000, 4000, 8000, 16000]; // Exponential back
 export const useWebSocketStore = create<WebSocketState>((set, get) => {
   let reconnectTimeout: NodeJS.Timeout | null = null;
   let subscribers: ((message: WSMessage) => void)[] = [];
+  let circuitBreakerOpen = false;
+  let circuitBreakerTimeout: NodeJS.Timeout | null = null;
 
   const clearReconnectTimeout = () => {
     if (reconnectTimeout) {
@@ -93,9 +95,29 @@ export const useWebSocketStore = create<WebSocketState>((set, get) => {
   const connect = (url: string) => {
     const state = get();
     
+    // Circuit breaker: Don't connect if too many failures
+    if (circuitBreakerOpen) {
+      console.log('🚫 Circuit breaker open - preventing connection attempts');
+      return;
+    }
+    
     // Don't connect if already connected or connecting
     if (state.isConnected || state.isConnecting) {
       console.log('WebSocket: Already connected or connecting, skipping');
+      return;
+    }
+    
+    // Open circuit breaker if too many failed attempts
+    if (state.reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+      console.log('🔴 Opening circuit breaker - too many failed attempts');
+      circuitBreakerOpen = true;
+      
+      // Reset circuit breaker after 30 seconds (like production apps)
+      circuitBreakerTimeout = setTimeout(() => {
+        console.log('🔄 Circuit breaker reset - allowing new connection attempts');
+        circuitBreakerOpen = false;
+        set({ reconnectAttempts: 0 });
+      }, 30000);
       return;
     }
 
@@ -218,24 +240,43 @@ export const useWebSocketStore = create<WebSocketState>((set, get) => {
       };
 
       ws.onerror = (error) => {
-        console.error('WebSocket error details:', {
-          error,
-          url,
-          readyState: ws.readyState,
-          timestamp: new Date().toISOString()
-        });
-        clearTimeout(connectionTimeout);
-        
-        set((state) => ({ 
-          ws: null,
-          isConnected: false,
-          lastError: `Connection error to ${url} - server may be unavailable or overloaded`,
-          isConnecting: false,
-          reconnectAttempts: state.reconnectAttempts + 1
-        }));
-        
-        // Don't auto-reconnect on error to prevent error loops
-        console.log('WebSocket error occurred, not auto-reconnecting');
+        try {
+          // Safely log error details without crashing
+          const errorDetails = {
+            url,
+            readyState: ws?.readyState || 'unknown',
+            timestamp: new Date().toISOString(),
+            errorType: error?.type || 'unknown',
+            errorMessage: 'WebSocket connection error'
+          };
+          
+          console.warn('WebSocket error (non-critical):', errorDetails);
+          clearTimeout(connectionTimeout);
+          
+          // Update state gracefully
+          set((state) => ({ 
+            ws: null,
+            isConnected: false,
+            lastError: `Connection issue - service temporarily unavailable`,
+            isConnecting: false,
+            reconnectAttempts: state.reconnectAttempts + 1,
+            isOfflineMode: true,
+            appStillFunctional: true
+          }));
+          
+          console.log('🔄 WebSocket error handled gracefully - app remains functional');
+        } catch (handlingError) {
+          // Fallback error handling to prevent complete crash 
+          console.warn('Error in WebSocket error handler:', handlingError);
+          set({
+            ws: null,
+            isConnected: false,
+            lastError: 'Connection unavailable',
+            isConnecting: false,
+            isOfflineMode: true,
+            appStillFunctional: true
+          });
+        }
       };
 
     } catch (error) {

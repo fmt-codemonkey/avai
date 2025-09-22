@@ -23,6 +23,7 @@ export function useWebSocket() {
   const hasAuthenticated = useRef(false);
   const isAuthenticating = useRef(false);
   const messageQueue = useRef<WSMessage[]>([]);
+  const hasTriedInitialConnection = useRef(false);
 
   // Send authentication message after WebSocket connection
   const authenticate = useCallback(async () => {
@@ -70,7 +71,21 @@ export function useWebSocket() {
     }
   }, [isConnected, isSignedIn, user, getToken, sendMessage]);
 
-  // Only disconnect when user signs out (no auto-connect)
+  // Auto-connect only once on mount (like Claude/ChatGPT)
+  useEffect(() => {
+    if (!hasTriedInitialConnection.current) {
+      hasTriedInitialConnection.current = true;
+      console.log('🚀 Initial WebSocket connection attempt...');
+      
+      try {
+        connect(WS_URL);
+      } catch (error) {
+        console.warn('Initial WebSocket connection failed (non-critical):', error);
+      }
+    }
+  }, [connect]); // Only include connect, runs once on mount
+
+  // Only disconnect when user signs out
   useEffect(() => {
     if (!isSignedIn && isConnected) {
       console.log('User signed out, disconnecting WebSocket...');
