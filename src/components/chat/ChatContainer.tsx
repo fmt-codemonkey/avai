@@ -44,7 +44,7 @@ export function ChatContainer({
   isHistoricalLoad = false,
 }: ChatContainerProps) {
   // WebSocket integration (auto-connect like Claude)
-  const { sendAnalysisRequest, isConnected } = useWebSocket(true);
+  const { sendAnalysisRequest, isConnected } = useWebSocket();
   
   // Claude-like real-time message handling with connection status
   const { 

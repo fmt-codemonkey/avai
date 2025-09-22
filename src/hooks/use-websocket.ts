@@ -1,4 +1,4 @@
-"use client";
+
 
 import { useEffect, useCallback, useRef } from 'react';
 import { useUser, useAuth } from '@clerk/nextjs';
@@ -6,7 +6,7 @@ import { useWebSocketStore, WSMessage } from '@/stores/websocket-store';
 
 const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'wss://websocket.avai.life/ws';
 
-export function useWebSocket(autoConnect: boolean = false) {
+export function useWebSocket() {
   const { user, isSignedIn } = useUser();
   const { getToken } = useAuth();
   const {
@@ -69,13 +69,10 @@ export function useWebSocket(autoConnect: boolean = false) {
     }
   }, [isConnected, isSignedIn, user, getToken, sendMessage]);
 
-  // Auto-connect when user is authenticated (optional)
+  // Only disconnect when user signs out (no auto-connect)
   useEffect(() => {
-    if (autoConnect && isSignedIn && user && !isConnected && !isConnecting) {
-      console.log('User authenticated, auto-connecting to WebSocket...');
-      connect(WS_URL);
-    } else if (!isSignedIn && isConnected) {
-      console.log('User not authenticated, disconnecting WebSocket...');
+    if (!isSignedIn && isConnected) {
+      console.log('User signed out, disconnecting WebSocket...');
       disconnect();
     }
 
@@ -85,7 +82,7 @@ export function useWebSocket(autoConnect: boolean = false) {
         disconnect();
       }
     };
-  }, [autoConnect, isSignedIn, user, isConnected, isConnecting, connect, disconnect]);
+  }, [isSignedIn, isConnected, disconnect]);
 
   // Authenticate after connection is established
   useEffect(() => {
