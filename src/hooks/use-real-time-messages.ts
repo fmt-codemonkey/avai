@@ -172,7 +172,7 @@ export function useRealTimeMessages() {
         case 'analysis_start':
           // Show thinking indicator with initial step
           setIsThinking(true);
-          setCurrentThinkingStep("🚀 Starting analysis...");
+          setCurrentThinkingStep(""); // Let TypingIndicator handle the progression
           console.log('🧠 AVAI is thinking...');
           
           // Set timeout to prevent infinite thinking state
@@ -427,7 +427,7 @@ export function useRealTimeMessages() {
     
     // Start thinking immediately when user sends a message (like Claude/ChatGPT)
     setIsThinking(true);
-    setCurrentThinkingStep("🚀 Starting analysis...");
+    setCurrentThinkingStep(""); // Let TypingIndicator handle the progression
     
     // Set timeout to prevent infinite thinking state (30 seconds)
     const timeout = setTimeout(() => {

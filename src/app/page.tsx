@@ -11,7 +11,7 @@ import { Menu, X } from "lucide-react";
 
 export default function AVAISinglePage() {
   const [messages, setMessages] = useState<Message[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading] = useState(false);
   const [leftSidebarCollapsed, setLeftSidebarCollapsed] = useState(false);
   const [rightSidebarOpen, setRightSidebarOpen] = useState(false);
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
@@ -39,35 +39,8 @@ export default function AVAISinglePage() {
 
 
 
-  const handleSendMessage = (content: string) => {
-    // Add user message
-    const userMessage: Message = {
-      id: `user-${Date.now()}`,
-      sender: "user",
-      content,
-      timestamp: new Date().toISOString(),
-      type: "text"
-    };
-
-    setMessages(prev => [...prev, userMessage]);
-    setIsLoading(true);
-
-    // Professional fallback response when WebSocket is unavailable
-    setTimeout(() => {
-      const responseContent = `**AVAI Security Analysis Service**\n\n⚠️ **Service Temporarily Unavailable**\n\nOur AI security analysis service is currently experiencing connectivity issues. This may be due to:\n\n• Backend server maintenance\n• Network connectivity problems\n• High system load\n\n**What you can do:**\n\n1. **Try again in a few moments** - Service usually resumes quickly\n2. **Check your internet connection** - Ensure stable connectivity\n3. **Contact support** if the issue persists\n\n**For immediate assistance:**\n• Email: support@avai.security\n• Status page: status.avai.security\n\nWe apologize for the inconvenience and appreciate your patience while we resolve this issue.`;
-
-      const aiMessage: Message = {
-        id: `ai-${Date.now()}`,
-        sender: "ai", 
-        content: responseContent,
-        timestamp: new Date().toISOString(),
-        type: "text"
-      };
-
-      setMessages(prev => [...prev, aiMessage]);
-      setIsLoading(false);
-    }, 1500);
-  };
+  // Remove hardcoded fallback - let ChatContainer handle WebSocket communication
+  // This allows the real WebSocket service to work properly
 
   const handleNewChat = () => {
     setMessages([]);
@@ -294,7 +267,6 @@ export default function AVAISinglePage() {
               {/* Chat Messages */}
               <ChatContainer
                 messages={messages}
-                onSendMessage={handleSendMessage}
                 isLoading={isLoading}
                 isEmpty={false}
                 className="flex-1 min-h-0"
@@ -304,7 +276,6 @@ export default function AVAISinglePage() {
           ) : (
             <ChatContainer
               messages={messages}
-              onSendMessage={handleSendMessage}
               isLoading={isLoading}
               isEmpty={messages.length === 0}
               className="h-full"

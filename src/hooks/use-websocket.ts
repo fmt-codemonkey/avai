@@ -39,13 +39,23 @@ export function useWebSocket() {
 
   // Auto-connect immediately when page loads (but don't show connection messages in UI)
   useEffect(() => {
-    console.log('🚀 Initial WebSocket connection attempt...');
+    console.log('🚀 useWebSocket mounted - attempting initial connection...');
+    console.log('🔌 WebSocket URL:', WS_URL);
+    console.log('🆔 Client ID ready:', persistentClientId.current);
+    console.log('🔌 Connect function available:', typeof connect);
     
-    try {
-      connect(WS_URL);
-    } catch (error) {
-      console.warn('Initial WebSocket connection failed (non-critical):', error);
-    }
+    // Add a small delay to ensure Zustand store is fully initialized
+    const timer = setTimeout(() => {
+      try {
+        console.log('🔌 Calling connect() function...');
+        connect(WS_URL);
+        console.log('🔌 Connect() function called successfully');
+      } catch (error) {
+        console.error('❌ Initial WebSocket connection failed:', error);
+      }
+    }, 100);
+    
+    return () => clearTimeout(timer);
   }, [connect]); // Runs once on mount
 
   // Only disconnect when user signs out

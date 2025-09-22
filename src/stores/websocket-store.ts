@@ -66,6 +66,8 @@ export const useWebSocketStore = create<WebSocketState>((set, get) => {
   let subscribers: ((message: WSMessage) => void)[] = [];
   let circuitBreakerOpen = false;
   let circuitBreakerTimeout: NodeJS.Timeout | null = null;
+  
+  console.log('🏪 WebSocket store initialized');
 
   const clearReconnectTimeout = () => {
     if (reconnectTimeout) {
@@ -95,9 +97,18 @@ export const useWebSocketStore = create<WebSocketState>((set, get) => {
   const connect = (url: string) => {
     const state = get();
     
+    console.log('🔌 WebSocket connect() called with URL:', url);
+    console.log('🔌 Current state:', {
+      isConnected: state.isConnected,
+      isConnecting: state.isConnecting,
+      reconnectAttempts: state.reconnectAttempts,
+      circuitBreakerOpen
+    });
+    
     // Circuit breaker: Don't connect if too many failures
     if (circuitBreakerOpen) {
       console.log('🚫 Circuit breaker open - preventing connection attempts');
+      set({ lastError: 'Connection blocked - too many failures. Please wait 30 seconds.' });
       return;
     }
     
@@ -118,6 +129,8 @@ export const useWebSocketStore = create<WebSocketState>((set, get) => {
         circuitBreakerOpen = false;
         set({ reconnectAttempts: 0 });
       }, 30000);
+      
+      set({ lastError: 'Too many connection failures. Please wait 30 seconds.' });
       return;
     }
 
@@ -139,12 +152,13 @@ export const useWebSocketStore = create<WebSocketState>((set, get) => {
     });
 
     try {
+      console.log('🔌 Creating new WebSocket connection...');
       const ws = new WebSocket(url);
-      console.log('WebSocket: Created WebSocket instance');
+      console.log('🔌 WebSocket instance created, waiting for connection...');
       
-      // Set a shorter timeout to prevent hanging
+      // Set a connection timeout to prevent hanging
       const connectionTimeout = setTimeout(() => {
-        console.error('WebSocket connection timeout');
+        console.error('❌ WebSocket connection timeout after 10 seconds');
         try {
           ws.close();
         } catch (e) {
@@ -154,22 +168,44 @@ export const useWebSocketStore = create<WebSocketState>((set, get) => {
           ws: null,
           isConnected: false,
           isConnecting: false,
-          lastError: 'Connection timeout - service may be unavailable',
+          lastError: 'Connection timeout - server may be unavailable or overloaded',
           reconnectAttempts: state.reconnectAttempts + 1
         });
-        // Don't auto-reconnect on timeout to prevent infinite hanging
-      }, 5000); // Reduced to 5 seconds
+        
+        // Try reconnecting if not too many attempts
+        if (state.reconnectAttempts + 1 < MAX_RECONNECT_ATTEMPTS) {
+          console.log('🔄 Scheduling reconnect after timeout...');
+          scheduleReconnect();
+        }
+      }, 10000); // Increased to 10 seconds for better reliability
 
       ws.onopen = () => {
-        console.log('WebSocket connected');
+        console.log('✅ WebSocket connected successfully!');
+        console.log('🔌 Connection details:', {
+          url,
+          readyState: ws.readyState,
+          protocol: ws.protocol,
+          extensions: ws.extensions
+        });
+        
         clearTimeout(connectionTimeout);
         clearReconnectTimeout();
+        
+        // Reset circuit breaker on successful connection
+        circuitBreakerOpen = false;
+        if (circuitBreakerTimeout) {
+          clearTimeout(circuitBreakerTimeout);
+          circuitBreakerTimeout = null;
+        }
+        
         set({ 
           ws,
           isConnected: true, 
           isConnecting: false, 
           reconnectAttempts: 0,
-          lastError: null 
+          lastError: null,
+          isOfflineMode: false,
+          appStillFunctional: true
         });
       };
 
@@ -241,37 +277,56 @@ export const useWebSocketStore = create<WebSocketState>((set, get) => {
 
       ws.onerror = (error) => {
         try {
-          // Safely log error details without crashing
+          // Enhanced error logging for debugging
           const errorDetails = {
             url,
             readyState: ws?.readyState || 'unknown',
             timestamp: new Date().toISOString(),
             errorType: error?.type || 'unknown',
-            errorMessage: 'WebSocket connection error'
+            errorMessage: 'WebSocket connection error',
+            networkState: navigator?.onLine ? 'online' : 'offline'
           };
           
-          console.warn('WebSocket error (non-critical):', errorDetails);
+          console.error('❌ WebSocket connection error:', errorDetails);
+          console.error('❌ Error event:', error);
+          
           clearTimeout(connectionTimeout);
           
-          // Update state gracefully
+          // More detailed error messages based on ready state
+          let errorMessage = 'Connection failed';
+          if (ws?.readyState === WebSocket.CONNECTING) {
+            errorMessage = 'Failed to establish connection - server may be down or unreachable';
+          } else if (ws?.readyState === WebSocket.CLOSING) {
+            errorMessage = 'Connection was interrupted during closing';
+          } else if (ws?.readyState === WebSocket.CLOSED) {
+            errorMessage = 'Connection was closed unexpectedly';
+          }
+          
+          // Update state with detailed error information
           set((state) => ({ 
             ws: null,
             isConnected: false,
-            lastError: `Connection issue - service temporarily unavailable`,
+            lastError: errorMessage,
             isConnecting: false,
             reconnectAttempts: state.reconnectAttempts + 1,
             isOfflineMode: true,
             appStillFunctional: true
           }));
           
-          console.log('🔄 WebSocket error handled gracefully - app remains functional');
+          // Try reconnecting if not too many attempts
+          if (get().reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+            console.log('🔄 Scheduling reconnect after error...');
+            scheduleReconnect();
+          }
+          
+          console.log('🔄 WebSocket error handled - app remains functional');
         } catch (handlingError) {
           // Fallback error handling to prevent complete crash 
-          console.warn('Error in WebSocket error handler:', handlingError);
+          console.error('❌ Critical error in WebSocket error handler:', handlingError);
           set({
             ws: null,
             isConnected: false,
-            lastError: 'Connection unavailable',
+            lastError: 'Critical connection error',
             isConnecting: false,
             isOfflineMode: true,
             appStillFunctional: true
