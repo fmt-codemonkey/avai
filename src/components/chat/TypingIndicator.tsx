@@ -43,16 +43,16 @@ export function TypingIndicator({
 
       {/* Ultra-clean thinking bubble */}
       <div className="flex-1 max-w-3xl">
-        <div className="inline-flex items-center gap-3 px-4 py-3 bg-muted/30 rounded-2xl rounded-tl-md border border-border/20 hover-lift">
-          {/* Perfect thinking dots */}
-          <div className="flex items-center gap-1">
-            <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/50 thinking-dot" />
-            <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/50 thinking-dot" />
-            <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/50 thinking-dot" />
+        <div className="inline-flex items-center gap-3 px-4 py-3 bg-muted/50 rounded-2xl rounded-tl-md border border-border/30 hover-lift shadow-sm backdrop-blur-sm">
+          {/* Perfect thinking dots with guaranteed visibility */}
+          <div className="thinking-dots-container flex items-center gap-1">
+            <div className="thinking-dot"></div>
+            <div className="thinking-dot"></div>
+            <div className="thinking-dot"></div>
           </div>
           
           {/* Clean, minimal text */}
-          <span className="text-sm text-muted-foreground/90 font-medium transition-premium">
+          <span className="text-sm text-foreground/80 font-medium transition-premium">
             {displayMessage}
           </span>
         </div>

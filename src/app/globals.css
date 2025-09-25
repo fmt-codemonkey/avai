@@ -305,8 +305,8 @@
       transform: scale(0.8);
     }
     50% { 
-      opacity: 0.9;
-      transform: scale(1.1);
+      opacity: 1;
+      transform: scale(1.3);
     }
   }
 
@@ -355,14 +355,38 @@
     animation: thinking-entrance 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   }
 
-  /* Perfect thinking dots */
+  /* Perfect thinking dots with guaranteed visibility */
   .thinking-dot {
     animation: thinking-pulse-premium 1.2s ease-in-out infinite;
+    background-color: rgb(59 130 246) !important; /* Force blue-500 */
+    opacity: 0.8 !important;
+    min-width: 8px !important;
+    min-height: 8px !important;
+    display: block !important;
+    border-radius: 50% !important;
   }
 
-  .thinking-dot:nth-child(1) { animation-delay: 0ms; }
-  .thinking-dot:nth-child(2) { animation-delay: 160ms; }
-  .thinking-dot:nth-child(3) { animation-delay: 320ms; }
+  .dark .thinking-dot {
+    background-color: rgb(96 165 250) !important; /* Force blue-400 for dark mode */
+  }
+
+  .thinking-dot:nth-child(1) { 
+    animation-delay: 0ms !important; 
+  }
+  .thinking-dot:nth-child(2) { 
+    animation-delay: 200ms !important; 
+  }
+  .thinking-dot:nth-child(3) { 
+    animation-delay: 400ms !important; 
+  }
+
+  /* Fallback for visibility issues */
+  .thinking-dots-container .thinking-dot {
+    width: 8px !important;
+    height: 8px !important;
+    background: #3b82f6 !important;
+    opacity: 1 !important;
+  }
 
   /* Subtle interactions */
   .hover-lift {
