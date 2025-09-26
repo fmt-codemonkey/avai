@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { 
   Shield, 
@@ -31,6 +31,11 @@ export function MessageBubble({ message, className, onRetryConnection }: Message
   const [showActions, setShowActions] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
 
+  // Debug: Log message content for AI messages
+  useEffect(() => {
+    // AI message rendering
+  }, [message.id, sender, content]);
+
   const formatTime = (timestamp: string) => {
     return new Date(timestamp).toLocaleTimeString('en-US', { 
       hour: '2-digit', 
@@ -44,17 +49,13 @@ export function MessageBubble({ message, className, onRetryConnection }: Message
       if (typeof content === 'string') {
         await navigator.clipboard.writeText(content);
         setIsCopied(true);
-        console.log('✅ Message copied to clipboard');
         
         // Reset the copied state after 2 seconds
         setTimeout(() => {
           setIsCopied(false);
         }, 2000);
-      } else {
-        console.warn('Cannot copy non-string content');
       }
-    } catch (error) {
-      console.error('Failed to copy message:', error);
+    } catch {
       // Fallback for older browsers
       try {
         const textArea = document.createElement('textarea');
@@ -67,9 +68,8 @@ export function MessageBubble({ message, className, onRetryConnection }: Message
         setTimeout(() => {
           setIsCopied(false);
         }, 2000);
-        console.log('✅ Message copied using fallback method');
-      } catch (fallbackError) {
-        console.error('Fallback copy method also failed:', fallbackError);
+      } catch {
+        // Silent fail
       }
     }
   };

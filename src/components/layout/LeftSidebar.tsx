@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -11,9 +11,7 @@ import {
   History,
   ChevronLeft,
   ChevronRight,
-  Clock,
   CheckCircle,
-  AlertTriangle,
   Sun,
   Moon,
   Monitor,
@@ -39,14 +37,7 @@ import {
 } from '@clerk/nextjs';
 
 
-interface ChatHistoryItem {
-  id: string;
-  title: string;
-  preview: string;
-  timestamp: string;
-  status: "completed" | "running" | "failed";
-  vulnerabilityCount?: number;
-}
+import type { ChatSession } from '@/lib/supabase';
 
 interface LeftSidebarProps {
   isCollapsed?: boolean;
@@ -55,10 +46,9 @@ interface LeftSidebarProps {
   onSelectChat?: (chatId: string) => void;
   currentChatId?: string;
   className?: string;
+  sessions?: ChatSession[];
+  isLoading?: boolean;
 }
-
-const mockChatHistory: ChatHistoryItem[] = [
-];
 
 // Component for authenticated users
 function AuthenticatedUserSection({ theme, setTheme }: { theme: string | undefined, setTheme: (theme: string) => void }) {
@@ -310,24 +300,38 @@ export default function LeftSidebar({
   onNewChat,
   onSelectChat, 
   currentChatId,
-  className
+  className,
+  sessions = [],
+  isLoading = false
 }: LeftSidebarProps) {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [hoveredChat, setHoveredChat] = useState<string | null>(null);
   const { theme, setTheme } = useTheme();
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "completed":
-        return <CheckCircle className="w-3 h-3 text-secure" />;
-      case "running":
-        return <div className="w-3 h-3 rounded-full bg-primary animate-pulse" />;
-      case "failed":
-        return <AlertTriangle className="w-3 h-3 text-critical" />;
-      default:
-        return <Clock className="w-3 h-3 text-muted-foreground" />;
+  // Memoize the date formatter to prevent re-creation on every render
+  const formatDate = useCallback((dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
+
+    if (diffInHours < 1) {
+      return 'Just now';
+    } else if (diffInHours < 24) {
+      return `${Math.floor(diffInHours)}h ago`;
+    } else if (diffInHours < 24 * 7) {
+      return `${Math.floor(diffInHours / 24)}d ago`;
+    } else {
+      return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
     }
-  };
+  }, []);
+
+  // Memoize hover handlers to prevent function recreation
+  const handleMouseEnter = useCallback((sessionId: string) => {
+    setHoveredChat(sessionId);
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    setHoveredChat(null);
+  }, []);
 
   if (isCollapsed) {
     return (
@@ -420,99 +424,98 @@ export default function LeftSidebar({
 
         <ScrollArea className="flex-1 min-h-0">
           <div className="space-y-1 px-2 pt-2 pb-3">
-            {mockChatHistory.map((chat) => (
-              <button
-                key={chat.id}
-                onClick={() => onSelectChat?.(chat.id)}
-                onMouseEnter={() => setHoveredChat(chat.id)}
-                onMouseLeave={() => setHoveredChat(null)}
-                className={cn(
-                  // Base styles
-                  "w-full text-left p-3 rounded-md transition-all duration-200",
-                  "group relative overflow-visible",
-                  "focus:outline-none focus:ring-1 focus:ring-primary/30",
-                  
-                  // Active state (like Claude AI)
-                  currentChatId === chat.id 
-                    ? "bg-primary/10 text-foreground shadow-sm border-l-2 border-primary" 
-                    : "text-muted-foreground hover:text-foreground hover:bg-transparent dark:hover:bg-[#0e0e0ead]",
-                  
-                  // Hover effects with glow shadow in dark mode
-                  "hover:shadow-sm dark:hover:shadow-lg dark:hover:shadow-primary/20",
-                  "hover:border-l-2 hover:border-primary/30",
-                  
-                  // Smooth transitions
-                  "transition-all duration-300 ease-out"
-                )}
-              >
-                <div className="space-y-2">
-                  <div className="flex items-start justify-between gap-2">
-                    <h4 className={cn(
-                      "font-medium text-sm truncate transition-colors duration-200",
-                      currentChatId === chat.id 
-                        ? "text-foreground" 
-                        : "text-foreground group-hover:text-foreground"
-                    )}>
-                      {chat.title}
-                    </h4>
-                    <div className="flex-shrink-0">
-                      {getStatusIcon(chat.status)}
-                    </div>
+            {isLoading ? (
+              <div className="space-y-2">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="p-3 rounded-md bg-muted/20 animate-pulse">
+                    <div className="h-4 bg-muted/40 rounded mb-2"></div>
+                    <div className="h-3 bg-muted/30 rounded w-2/3"></div>
                   </div>
-                  
-                  <p className={cn(
-                    "text-xs line-clamp-2 leading-relaxed transition-colors duration-200",
-                    currentChatId === chat.id 
-                      ? "text-muted-foreground" 
-                      : "text-muted-foreground group-hover:text-foreground/80"
-                  )}>
-                    {chat.preview}
-                  </p>
-                  
-                  <div className="flex items-center justify-between">
-                    <span className={cn(
-                      "text-[10px] font-medium transition-colors duration-200",
-                      currentChatId === chat.id 
-                        ? "text-muted-foreground/70" 
-                        : "text-muted-foreground/60 group-hover:text-muted-foreground/80"
-                    )}>
-                      {chat.timestamp}
-                    </span>
-                    
-                    {chat.vulnerabilityCount !== undefined && (
-                      <div className={cn(
-                        "inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-thin",
-                        "border transition-all duration-200",
-                        chat.vulnerabilityCount === 0 
-                          ? cn(
-                              // Secure badge - green theme (transparent background)
-                              "text-green-700 dark:text-green-400",
-                              "bg-transparent border-transparent",
-                              // Hover states (only border color visible)
-                              currentChatId === chat.id 
-                                ? "border-green-400 dark:border-green-500" 
-                                : "group-hover:border-green-400 dark:group-hover:border-green-500"
-                            )
-                          : cn(
-                              // Issues badge - red theme (transparent background)
-                              "text-red-700 dark:text-red-400",
-                              "bg-transparent border-transparent",
-                              // Hover states (only border color visible)
-                              currentChatId === chat.id 
-                                ? "border-red-400 dark:border-red-500" 
-                                : "group-hover:border-red-400 dark:group-hover:border-red-500"
-                            )
-                      )}>
-                        {chat.vulnerabilityCount === 0 
-                          ? "Secure" 
-                          : `${chat.vulnerabilityCount} issues`
-                        }
-                      </div>
+                ))}
+              </div>
+            ) : sessions.length === 0 ? (
+              <div className="p-4 text-center">
+                <div className="text-muted-foreground text-sm mb-2">No chats yet</div>
+                <div className="text-muted-foreground text-xs">Start a new security audit to begin</div>
+              </div>
+            ) : (
+              sessions.map((session) => {
+                return (
+                  <button
+                    key={session.id}
+                    onClick={() => onSelectChat?.(session.id.toString())}
+                    onMouseEnter={() => handleMouseEnter(session.id.toString())}
+                    onMouseLeave={handleMouseLeave}
+                    className={cn(
+                      // Base styles
+                      "w-full text-left p-3 rounded-md transition-all duration-200",
+                      "group relative overflow-visible",
+                      "focus:outline-none focus:ring-1 focus:ring-primary/30",
+                      
+                      // Active state (like Claude AI)
+                      currentChatId === session.id.toString() 
+                        ? "bg-primary/10 text-foreground shadow-sm border-l-2 border-primary" 
+                        : "text-muted-foreground hover:text-foreground hover:bg-transparent dark:hover:bg-[#0e0e0ead]",
+                      
+                      // Hover effects with glow shadow in dark mode
+                      "hover:shadow-sm dark:hover:shadow-lg dark:hover:shadow-primary/20",
+                      "hover:border-l-2 hover:border-primary/30",
+                      
+                      // Smooth transitions
+                      "transition-all duration-300 ease-out"
                     )}
-                  </div>
-                </div>
-              </button>
-            ))}
+                  >
+                    <div className="space-y-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <h4 className={cn(
+                          "font-medium text-sm truncate transition-colors duration-200",
+                          currentChatId === session.id.toString() 
+                            ? "text-foreground" 
+                            : "text-foreground group-hover:text-foreground"
+                        )}>
+                          {session.title}
+                        </h4>
+                        <div className="flex-shrink-0">
+                          <CheckCircle className="w-3 h-3 text-secure" />
+                        </div>
+                      </div>
+                      
+                      <p className={cn(
+                        "text-xs line-clamp-2 leading-relaxed transition-colors duration-200",
+                        currentChatId === session.id.toString() 
+                          ? "text-muted-foreground" 
+                          : "text-muted-foreground group-hover:text-foreground/80"
+                      )}>
+                        Security audit session
+                      </p>
+                      
+                      <div className="flex items-center justify-between">
+                        <span className={cn(
+                          "text-[10px] font-medium transition-colors duration-200",
+                          currentChatId === session.id.toString() 
+                            ? "text-muted-foreground/70" 
+                            : "text-muted-foreground/60 group-hover:text-muted-foreground/80"
+                        )}>
+                          {formatDate(session.updated_at)}
+                        </span>
+                        
+                        <div className={cn(
+                          "inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-thin",
+                          "border transition-all duration-200",
+                          "text-green-700 dark:text-green-400",
+                          "bg-transparent border-transparent",
+                          currentChatId === session.id.toString() 
+                            ? "border-green-400 dark:border-green-500" 
+                            : "group-hover:border-green-400 dark:group-hover:border-green-500"
+                        )}>
+                          Active
+                        </div>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })
+            )}
           </div>
         </ScrollArea>
       </div>

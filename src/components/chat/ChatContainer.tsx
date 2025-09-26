@@ -6,8 +6,6 @@ import { MessageList } from "@/components/chat/MessageList";
 import { ChatInput } from "@/components/chat/ChatInput";
 import { EmptyState } from "@/components/chat/EmptyState";
 import { SubtleConnectionIndicator } from "@/components/chat/SubtleConnectionIndicator";
-import { useWebSocket } from '@/hooks/use-websocket';
-import { useRealTimeMessages } from '@/hooks/use-real-time-messages';
 
 interface ChatContainerProps {
   messages?: Message[];
@@ -16,6 +14,8 @@ interface ChatContainerProps {
   isEmpty?: boolean;
   className?: string;
   isHistoricalLoad?: boolean;
+  currentThinkingStep?: string;
+  onRetryConnection?: () => void;
 }
 
 interface Message {
@@ -36,40 +36,17 @@ interface Message {
 }
 
 export function ChatContainer({
-  messages: externalMessages = [],
+  messages = [],
   onSendMessage,
-  isLoading: externalIsLoading = false,
-  isEmpty: externalIsEmpty = true,
+  isLoading = false,
+  isEmpty = true,
   className,
   isHistoricalLoad = false,
+  currentThinkingStep,
+  onRetryConnection,
 }: ChatContainerProps) {
-  // WebSocket integration (auto-connect like Claude)
-  const { sendAnalysisRequest, isConnected } = useWebSocket();
-  
-  // Claude-like real-time message handling with connection status
-  const { 
-    isThinking, 
-    messages: realtimeMessages, 
-    currentThinkingStep,
-    addUserMessage, 
-    handleRetryConnection 
-  } = useRealTimeMessages();
-  
-  // Convert realtime messages to chat format
-  const convertedRealtimeMessages: Message[] = realtimeMessages.map(msg => ({
-    id: msg.id,
-    sender: msg.sender,
-    content: msg.content,
-    timestamp: msg.timestamp,
-    type: msg.type,
-  }));
-  
-  // Merge all messages: external + realtime (includes user + AI responses)
-  const allMessages = [...externalMessages, ...convertedRealtimeMessages];
-  const isEmpty = externalIsEmpty && allMessages.length === 0;
-  const isLoading = externalIsLoading || isThinking;
-
-  // No need for manual WebSocket message processing - handled by useRealTimeMessages
+  // Use messages directly from parent (single source of truth)
+  const allMessages = messages;
 
   // Get input placeholder based on connection state
   const getInputPlaceholder = useCallback(() => {
@@ -79,12 +56,9 @@ export function ChatContainer({
     return "Send a message...";
   }, [isEmpty]);
 
-  // Enhanced message sending with WebSocket support and error handling
+  // Simplified message sending - delegate to parent
   const handleSendMessage = useCallback((content: string) => {
     if (!content.trim()) return;
-
-    // Add user message immediately for instant feedback (like Claude/ChatGPT)
-    addUserMessage(content.trim());
 
     // Optional: Play subtle send sound for better UX
     if (typeof window !== 'undefined' && 'AudioContext' in window) {
@@ -109,30 +83,11 @@ export function ChatContainer({
       }
     }
 
-    // Send via WebSocket if connected with error handling
-    if (isConnected && sendAnalysisRequest) {
-      try {
-        const success = sendAnalysisRequest(content.trim());
-        if (!success) {
-          // WebSocket send failed - show error message
-          console.error('Failed to send analysis request via WebSocket');
-          // The WebSocket store will handle error messaging internally
-        }
-      } catch (error) {
-        console.error('Error sending WebSocket message:', error);
-        // Fallback to external handler if available
-        if (onSendMessage) {
-          onSendMessage(content.trim());
-        }
-      }
-    } else if (onSendMessage) {
-      // Fallback to external handler when WebSocket not connected
+    // Delegate all message handling to parent
+    if (onSendMessage) {
       onSendMessage(content.trim());
-    } else {
-      // No connection and no fallback - user message already added, show warning
-      console.warn('No WebSocket connection and no fallback handler available');
     }
-  }, [isConnected, sendAnalysisRequest, onSendMessage, addUserMessage]);
+  }, [onSendMessage]);
 
   return (
     <div className={cn(
@@ -154,7 +109,7 @@ export function ChatContainer({
               messages={allMessages} 
               isLoading={isLoading}
               isHistoricalLoad={isHistoricalLoad}
-              onRetryConnection={handleRetryConnection}
+              onRetryConnection={onRetryConnection}
               currentThinkingStep={currentThinkingStep}
             />
           </div>

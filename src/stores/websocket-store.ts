@@ -23,6 +23,7 @@ export interface WSMessage {
     session_id: string;
     user_id: string | null;
     is_anonymous: boolean;
+    supabase_session_id?: number; // Track Supabase chat session ID
   };
   
   // Authentication fields
@@ -102,7 +103,7 @@ export const useWebSocketStore = create<WebSocketState>((set, get) => {
       isConnected: state.isConnected,
       isConnecting: state.isConnecting,
       reconnectAttempts: state.reconnectAttempts,
-      circuitBreakerOpen
+      circuitBreakerOpen: circuitBreakerOpen
     });
     
     // Circuit breaker: Don't connect if too many failures

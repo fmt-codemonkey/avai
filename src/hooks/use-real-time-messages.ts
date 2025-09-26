@@ -244,8 +244,22 @@ export function useRealTimeMessages() {
           // Check if response was successful
           if (wsMessage.status === 'success' && wsMessage.response) {
             try {
-              // Parse the JSON response string
-              const parsedResponse = JSON.parse(wsMessage.response);
+              // Handle both string and object response formats
+              let parsedResponse: { 
+                message: string; 
+                session_id?: string; 
+                [key: string]: unknown 
+              };
+              if (typeof wsMessage.response === 'string') {
+                parsedResponse = JSON.parse(wsMessage.response);
+              } else {
+                // Response is already an object
+                parsedResponse = wsMessage.response as { 
+                  message: string; 
+                  session_id?: string; 
+                  [key: string]: unknown 
+                };
+              }
               const aiResponse = parsedResponse.message;
               const processingTime = wsMessage.processing_time;
               const sessionId = parsedResponse.session_id;
@@ -329,7 +343,22 @@ export function useRealTimeMessages() {
             
             if (wsMessage.status === 'success' && wsMessage.response) {
               try {
-                const parsedResponse = JSON.parse(wsMessage.response);
+                // Handle both string and object response formats
+                let parsedResponse: { 
+                  message: string; 
+                  session_id?: string; 
+                  [key: string]: unknown 
+                };
+                if (typeof wsMessage.response === 'string') {
+                  parsedResponse = JSON.parse(wsMessage.response);
+                } else {
+                  // Response is already an object
+                  parsedResponse = wsMessage.response as { 
+                    message: string; 
+                    session_id?: string; 
+                    [key: string]: unknown 
+                  };
+                }
                 const aiResponse = parsedResponse.message;
                 
                 const successResponse: ProcessedMessage = {
@@ -372,7 +401,13 @@ export function useRealTimeMessages() {
               setMessages(prev => [...prev, errorResponse]);
             }
           } else {
-            console.log('Unhandled message type:', wsMessage.type);
+            // Handle progress/status messages that don't need UI updates
+            if (wsMessage.status && ['processing', 'progress', 'completed'].includes(wsMessage.status)) {
+              // These are normal progress messages, no need to log as unhandled
+              return;
+            }
+            
+            console.log('Unhandled message type:', wsMessage.type, 'Status:', wsMessage.status);
           }
       }
     } catch (error) {

@@ -31,13 +31,11 @@ export default function ClerkIntegrationDemo() {
     );
 
     ws.onopen = async () => {
-      console.log('✅ WebSocket connected');
       setWsConnected(true);
       
       // Authenticate with Clerk token
       try {
         const token = await getToken();
-        console.log('🔑 Sending Clerk token for authentication');
         
         ws.send(JSON.stringify({
           type: 'authenticate',
@@ -51,10 +49,8 @@ export default function ClerkIntegrationDemo() {
 
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      console.log('📨 WebSocket message:', data);
       
       if (data.type === 'auth_success') {
-        console.log('🎉 WebSocket authenticated successfully');
         setWsAuthenticated(true);
         setMessages(prev => [...prev, `✅ Authenticated as ${data.user.name} (${data.user.email})`]);
       } else if (data.type === 'auth_error' || data.type === 'error') {
@@ -67,7 +63,6 @@ export default function ClerkIntegrationDemo() {
     };
 
     ws.onclose = () => {
-      console.log('🔌 WebSocket disconnected');
       setWsConnected(false);
       setWsAuthenticated(false);
     };

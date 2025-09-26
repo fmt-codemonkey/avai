@@ -39,17 +39,11 @@ export function useWebSocket() {
 
   // Auto-connect immediately when page loads (but don't show connection messages in UI)
   useEffect(() => {
-    console.log('🚀 useWebSocket mounted - attempting initial connection...');
-    console.log('🔌 WebSocket URL:', WS_URL);
-    console.log('🆔 Client ID ready:', persistentClientId.current);
-    console.log('🔌 Connect function available:', typeof connect);
     
     // Add a small delay to ensure Zustand store is fully initialized
     const timer = setTimeout(() => {
       try {
-        console.log('🔌 Calling connect() function...');
         connect(WS_URL);
-        console.log('🔌 Connect() function called successfully');
       } catch (error) {
         console.error('❌ Initial WebSocket connection failed:', error);
       }
@@ -61,7 +55,6 @@ export function useWebSocket() {
   // Only disconnect when user signs out
   useEffect(() => {
     if (!isSignedIn && isConnected) {
-      console.log('User signed out, disconnecting WebSocket...');
       disconnect();
     }
 
@@ -76,12 +69,10 @@ export function useWebSocket() {
   // Process queued messages when connected
   const processQueuedMessages = useCallback(() => {
     if (isConnected && messageQueue.current.length > 0) {
-      console.log('📤 Processing queued messages:', messageQueue.current.length);
       const messages = [...messageQueue.current];
       messageQueue.current = [];
       
       messages.forEach(message => {
-        console.log('📤 Sending queued message:', message);
         sendMessage(message);
       });
     }
@@ -105,7 +96,6 @@ export function useWebSocket() {
   // Manual connect function
   const manualConnect = useCallback(() => {
     if (!isConnected && !isConnecting) {
-      console.log('Manually connecting to WebSocket...');
       connect(WS_URL);
     }
   }, [isConnected, isConnecting, connect]);
@@ -113,14 +103,13 @@ export function useWebSocket() {
   // Manual disconnect function
   const manualDisconnect = useCallback(() => {
     if (isConnected) {
-      console.log('Manually disconnecting from WebSocket...');
       disconnect();
     }
   }, [isConnected, disconnect]);
 
   // Send analysis request with lazy connection and message queuing
   const sendAnalysisRequest = useCallback(
-    (prompt: string): boolean => {
+    (prompt: string, sessionId?: number): boolean => {
       // Use Clerk-based persistent client ID (same for entire session)
       const clientId = persistentClientId.current;
       
@@ -134,28 +123,26 @@ export function useWebSocket() {
         prompt,
         client_id: clientId,
         session_data: {
-          session_id: clientId, // Same session ID for all messages from this client
+          session_id: sessionId ? `supabase_${sessionId}` : clientId, // Use Supabase session ID when available
           user_id: user?.id || null,
-          is_anonymous: !user
+          is_anonymous: !user,
+          supabase_session_id: sessionId // Track the actual Supabase session ID
         }
       };
 
       // If connected, send immediately
       if (isConnected) {
-        console.log('📤 Sending analysis request immediately:', message);
         return sendMessage(message);
       }
 
       // If not connected, start connection and queue message
       if (!isConnecting) {
-        console.log('🔗 Starting WebSocket connection and queuing message...');
         messageQueue.current.push(message);
         connect(WS_URL);
         return true; // Return true because message is queued
       }
 
       // If connecting, queue message
-      console.log('📥 Queuing message until connection completes...');
       messageQueue.current.push(message);
       return true; // Return true because message is queued
     },
