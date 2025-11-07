@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback } from 'react';
+import { useCallback, useState, useEffect } from 'react';
+import Link from 'next/link';
 import { cn } from "@/lib/utils";
 import { MessageList } from "@/components/chat/MessageList";
 import { ChatInput } from "@/components/chat/ChatInput";
@@ -16,6 +17,7 @@ interface ChatContainerProps {
   isHistoricalLoad?: boolean;
   currentThinkingStep?: string;
   onRetryConnection?: () => void;
+  showBookNowOverlay?: boolean; // New prop to control overlay
 }
 
 interface Message {
@@ -35,6 +37,69 @@ interface Message {
   };
 }
 
+// Book Now Overlay Component
+const BookNowOverlay = ({ onClose }: { onClose?: () => void }) => {
+  return (
+    <div className="absolute inset-0 bg-background/95 backdrop-blur-md flex items-center justify-center z-50 p-4" style={{ backgroundColor: 'rgba(10, 10, 11, 0.95)' }}>
+      <div className="bg-card border border-muted rounded-lg p-6 shadow-2xl max-w-md w-full relative" style={{ backgroundColor: 'rgba(26, 26, 29, 0.95)', borderColor: 'rgba(45, 45, 48, 0.8)' }}>
+        {/* Close Button */}
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:pointer-events-none text-muted-foreground hover:text-foreground"
+          >
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            <span className="sr-only">Close</span>
+          </button>
+        )}
+        
+        <div className="text-center">
+          <div className="mb-6">
+            <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: 'rgba(0, 102, 255, 0.1)' }}>
+              <svg className="w-8 h-8" style={{ color: '#0066FF' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold mb-2" style={{ color: '#FFFFFF' }}>
+              Ready to Get Started?
+            </h3>
+            <p className="text-sm" style={{ color: '#A0A0A3' }}>
+              Connect directly with our security experts for a personalized consultation and immediate assistance.
+            </p>
+          </div>
+          
+          <Link 
+            href="https://docs.google.com/forms/d/e/1FAIpQLSda_4cS1bExxuj8x9UFoxw92Ei1lZK9bM_cBw9nHCug_hGgrQ/viewform?usp=send_form"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center w-full px-6 py-3 font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 touch-target hover:scale-[1.02] active:scale-[0.98]"
+            style={{ 
+              backgroundColor: '#0066FF',
+              color: '#FFFFFF',
+              boxShadow: '0 0 20px rgba(0, 102, 255, 0.3)'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#0052CC';
+              e.currentTarget.style.boxShadow = '0 0 25px rgba(0, 102, 255, 0.4)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#0066FF';
+              e.currentTarget.style.boxShadow = '0 0 20px rgba(0, 102, 255, 0.3)';
+            }}
+          >
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            Book Now
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export function ChatContainer({
   messages = [],
   onSendMessage,
@@ -44,7 +109,20 @@ export function ChatContainer({
   isHistoricalLoad = false,
   currentThinkingStep,
   onRetryConnection,
+  showBookNowOverlay = true, // Default to true since backend is not running
 }: ChatContainerProps) {
+  // State to control overlay visibility
+  const [isOverlayVisible, setIsOverlayVisible] = useState(showBookNowOverlay);
+
+  // Update overlay visibility when prop changes
+  useEffect(() => {
+    setIsOverlayVisible(showBookNowOverlay);
+  }, [showBookNowOverlay]);
+
+  // Handle overlay close
+  const handleCloseOverlay = useCallback(() => {
+    setIsOverlayVisible(false);
+  }, []);
   // Use messages directly from parent (single source of truth)
   const allMessages = messages;
 
@@ -125,6 +203,9 @@ export function ChatContainer({
           placeholder={getInputPlaceholder()}
         />
       </div>
+
+      {/* Book Now Overlay - shown when backend is unavailable */}
+      {isOverlayVisible && <BookNowOverlay onClose={handleCloseOverlay} />}
     </div>
   );
 }
