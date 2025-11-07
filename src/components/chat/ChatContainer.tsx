@@ -63,10 +63,10 @@ const BookNowOverlay = ({ onClose }: { onClose?: () => void }) => {
               </svg>
             </div>
             <h3 className="text-lg font-semibold mb-2" style={{ color: '#FFFFFF' }}>
-              Ready to Get Started?
+              Ready for a Demo?
             </h3>
             <p className="text-sm" style={{ color: '#A0A0A3' }}>
-              Connect directly with our security experts for a personalized consultation and immediate assistance.
+              Schedule a personalized demo with our security experts to see AVAI in action and protect your code today.
             </p>
           </div>
           
