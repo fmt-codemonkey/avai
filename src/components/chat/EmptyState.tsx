@@ -1,9 +1,10 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { Shield, Github, Upload, Sparkles, CheckCircle } from "lucide-react";
+import { Shield, Github, Upload, Sparkles, CheckCircle, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import Link from "next/link";
 
 interface EmptyStateProps {
   onStartAudit?: (url: string) => void;
@@ -16,13 +17,13 @@ export function EmptyState({ className }: EmptyStateProps) {
 
   return (
     <div className={cn(
-      "w-full h-full flex items-center justify-center p-6 text-center relative",
+      "w-full h-full overflow-y-auto p-6 text-center relative",
       className
     )}>
       {/* Background Elements */}
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5 pointer-events-none" />
       
-      <div className="max-w-2xl mx-auto space-y-8 relative z-10">
+      <div className="max-w-4xl mx-auto space-y-8 relative z-10 py-8">
         {/* Logo and Title */}
         <div className="space-y-4">
           <div className="flex flex-col items-center gap-3">
@@ -83,6 +84,20 @@ export function EmptyState({ className }: EmptyStateProps) {
               <Upload className="w-5 h-5 mr-2" />
               Upload Code Files
             </Button>
+          </div>
+          
+          {/* How to Use Guide Button */}
+          <div className="flex justify-center">
+            <Link href="/how-to-use">
+              <Button 
+                size="lg" 
+                variant="ghost"
+                className="text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+              >
+                <BookOpen className="w-5 h-5 mr-2" />
+                How to Use AVAI Platform
+              </Button>
+            </Link>
           </div>
           
           {/* Trust Indicators */}

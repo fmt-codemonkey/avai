@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import LeftSidebar from "@/components/layout/LeftSidebar";
 import { RightSidebar } from "@/components/layout/RightSidebar";
 import { ChatContainer } from "@/components/chat/ChatContainer";
+import { Header } from "@/components/layout/Header";
 import { useIntegratedChat } from "@/hooks/use-integrated-chat";
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
@@ -90,6 +91,14 @@ export default function AVAISinglePage() {
 
   return (
     <div className="h-screen flex flex-col bg-gradient-to-br from-background via-background to-muted/20 text-foreground overflow-hidden">
+      {/* Desktop Header */}
+      {!isMobile && (
+        <Header 
+          onMenuToggle={() => setLeftSidebarCollapsed(!leftSidebarCollapsed)}
+          isSidebarOpen={!leftSidebarCollapsed}
+        />
+      )}
+      
       {/* Professional Mobile Header */}
       {isMobile && (
         <header className="flex-shrink-0 flex items-center justify-between p-4 border-b border-border/50 bg-gradient-to-r from-card/95 to-card/90 backdrop-blur-md z-50 shadow-sm">
@@ -112,6 +121,21 @@ export default function AVAISinglePage() {
           </div>
           
           <div className="flex items-center gap-2">
+            {/* Twitter button for mobile */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => window.open('https://x.com/avai_canister', '_blank', 'noopener,noreferrer')}
+              className="text-muted-foreground hover:text-foreground hover:bg-primary/10 transition-colors"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                className="w-4 h-4 fill-current"
+                aria-hidden="true"
+              >
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+              </svg>
+            </Button>
             {messages.length > 0 && (
               <Button
                 variant="ghost"
