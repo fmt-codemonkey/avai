@@ -1,10 +1,11 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { Shield, Github, Upload, Sparkles, CheckCircle, BookOpen } from "lucide-react";
+import { Github, Upload, Sparkles, CheckCircle, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
+import Image from "next/image";
 
 interface EmptyStateProps {
   onStartAudit?: (url: string) => void;
@@ -28,8 +29,14 @@ export function EmptyState({ className }: EmptyStateProps) {
         <div className="space-y-4">
           <div className="flex flex-col items-center gap-3">
             <div className="relative">
-              <div className="w-16 h-16 bg-gradient-to-br from-primary via-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-xl">
-                <Shield className="w-8 h-8 text-white" />
+              <div className="w-16 h-16 bg-gradient-to-br from-primary via-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-xl overflow-hidden">
+                <Image
+                  src="/avai-logo.png"
+                  alt="AVAI Logo"
+                  width={32}
+                  height={32}
+                  className="object-contain"
+                />
               </div>
               <Sparkles className="w-4 h-4 text-yellow-400 absolute -top-1 -right-1" />
             </div>

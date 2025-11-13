@@ -1,8 +1,9 @@
 "use client";
 
-import { Shield, Github, Twitter, Mail, ExternalLink } from "lucide-react";
+import { Github, Twitter, Mail, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import Image from "next/image";
 
 interface FooterLink {
   title: string;
@@ -46,7 +47,15 @@ export function Footer() {
           {/* Brand Section */}
           <div className="lg:col-span-2">
             <div className="flex items-center gap-2 mb-4">
-              <Shield className="h-6 w-6 text-primary glow-cyber" />
+              <div className="w-6 h-6 rounded overflow-hidden flex items-center justify-center">
+                <Image
+                  src="/avai-logo.png"
+                  alt="AVAI Logo"
+                  width={24}
+                  height={24}
+                  className="object-contain"
+                />
+              </div>
               <span className="text-xl font-bold text-gradient-cyber">AVAI</span>
             </div>
             <p className="text-sm text-muted-foreground mb-4 max-w-md">

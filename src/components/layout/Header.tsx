@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { 
-  Shield, 
   Menu, 
   X, 
   Search,
@@ -49,10 +49,13 @@ export function Header({ onMenuToggle, isSidebarOpen }: HeaderProps) {
           {/* Logo */}
           <div className="flex items-center gap-2">
             <div className="relative">
-              <Shield className="h-8 w-8 text-primary glow-cyber" />
-              <div className="absolute inset-0 animate-pulse-cyber">
-                <Shield className="h-8 w-8 text-primary/30" />
-              </div>
+              <Image
+                src="/avai-logo.png"
+                alt="AVAI Logo"
+                width={32}
+                height={32}
+                className="h-8 w-8 object-contain"
+              />
             </div>
             <div className="hidden sm:block">
               <h1 className="text-xl font-bold text-gradient-cyber">AVAI</h1>

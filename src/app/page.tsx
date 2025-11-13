@@ -8,6 +8,7 @@ import { Header } from "@/components/layout/Header";
 import { useIntegratedChat } from "@/hooks/use-integrated-chat";
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
+import Image from "next/image";
 
 export default function AVAISinglePage() {
   const [leftSidebarCollapsed, setLeftSidebarCollapsed] = useState(false);
@@ -112,8 +113,14 @@ export default function AVAISinglePage() {
           </Button>
           
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-primary to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
-              <span className="text-white font-bold text-sm">A</span>
+            <div className="w-8 h-8 rounded-xl overflow-hidden flex items-center justify-center shadow-lg">
+              <Image
+                src="/avai-logo.png"
+                alt="AVAI Logo"
+                width={32}
+                height={32}
+                className="object-contain"
+              />
             </div>
             <h1 className="text-lg font-bold bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
               AVAI
