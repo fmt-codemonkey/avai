@@ -103,12 +103,20 @@ export function Header({ onMenuToggle, isSidebarOpen }: HeaderProps) {
           <SignedOut>
             <div className="flex items-center gap-2">
               <SignInButton mode="modal">
-                <Button variant="ghost" size="sm">
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  className="hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 transition-colors border border-transparent"
+                >
                   Sign In
                 </Button>
               </SignInButton>
               <SignUpButton mode="modal">
-                <Button variant="default" size="sm">
+                <Button 
+                  variant="default" 
+                  size="sm"
+                  className="hover:bg-blue-600 hover:shadow-lg transform hover:scale-105 transition-all duration-200 bg-primary"
+                >
                   Sign Up
                 </Button>
               </SignUpButton>
