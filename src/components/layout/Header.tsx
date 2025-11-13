@@ -99,21 +99,6 @@ export function Header({ onMenuToggle, isSidebarOpen }: HeaderProps) {
             Follow
           </Button>
 
-          {/* Notifications */}
-          <Button variant="ghost" size="sm" className="relative">
-            <Bell className="h-5 w-5" />
-            {notifications > 0 && (
-              <Badge 
-                variant="destructive" 
-                className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs"
-              >
-                {notifications}
-              </Badge>
-            )}
-          </Button>
-
-
-
           {/* Authentication */}
           <SignedOut>
             <div className="flex items-center gap-2">
@@ -130,6 +115,19 @@ export function Header({ onMenuToggle, isSidebarOpen }: HeaderProps) {
             </div>
           </SignedOut>
           <SignedIn>
+            {/* Notifications - Only shown after successful signup/signin */}
+            <Button variant="ghost" size="sm" className="relative">
+              <Bell className="h-5 w-5" />
+              {notifications > 0 && (
+                <Badge 
+                  variant="destructive" 
+                  className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs"
+                >
+                  {notifications}
+                </Badge>
+              )}
+            </Button>
+            
             <UserButton 
               appearance={{
                 elements: {
