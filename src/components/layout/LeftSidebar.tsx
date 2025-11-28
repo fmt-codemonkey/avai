@@ -28,10 +28,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  SignInButton,
-  SignUpButton,
-  SignedIn,
-  SignedOut,
   useUser,
   useClerk
 } from '@clerk/nextjs';
@@ -213,42 +209,7 @@ function AuthenticatedUserSection({ theme, setTheme }: { theme: string | undefin
   );
 }
 
-// Component for unauthenticated users
-function UnauthenticatedSection() {
-  return (
-    <div className="space-y-3">
-      <div className="text-center">
-        <div className="w-12 h-12 mx-auto rounded-full bg-muted flex items-center justify-center mb-3">
-          <User className="w-6 h-6 text-muted-foreground" />
-        </div>
-        <h3 className="text-sm font-medium mb-1">Welcome to AVAI</h3>
-        <p className="text-xs text-muted-foreground mb-4">
-          Sign in to access your security audits and personalized dashboard
-        </p>
-      </div>
-      
-      <div className="space-y-2">
-        <SignInButton mode="modal">
-          <Button className="w-full" variant="default">
-            Sign In
-          </Button>
-        </SignInButton>
-        
-        <SignUpButton mode="modal">
-          <Button className="w-full" variant="outline">
-            Create Account
-          </Button>
-        </SignUpButton>
-      </div>
-      
-      <div className="text-center">
-        <p className="text-xs text-muted-foreground">
-          Secure your code with AI-powered auditing
-        </p>
-      </div>
-    </div>
-  );
-}
+
 
 // Component for authenticated users in collapsed state
 function CollapsedAuthenticatedSection({ onToggle }: { onToggle?: () => void }) {
@@ -278,21 +239,7 @@ function CollapsedAuthenticatedSection({ onToggle }: { onToggle?: () => void }) 
   );
 }
 
-// Component for unauthenticated users in collapsed state
-function CollapsedUnauthenticatedSection({ onToggle }: { onToggle?: () => void }) {
-  return (
-    <Button
-      variant="ghost"
-      onClick={onToggle}
-      className="w-8 h-8 p-0 rounded-full hover:bg-muted/25 dark:hover:bg-muted/15 transition-colors"
-      title="Sign in - Click to expand"
-    >
-      <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center">
-        <User className="w-3 h-3 text-muted-foreground" />
-      </div>
-    </Button>
-  );
-}
+
 
 export default function LeftSidebar({ 
   isCollapsed = false,
@@ -305,6 +252,8 @@ export default function LeftSidebar({
   isLoading = false
 }: LeftSidebarProps) {
   const [hoveredChat, setHoveredChat] = useState<string | null>(null);
+  const [isHovered, setIsHovered] = useState(false);
+  const [autoCollapsed, setAutoCollapsed] = useState(true); // Auto-hide by default
   const { theme, setTheme } = useTheme();
 
   // Memoize the date formatter to prevent re-creation on every render
@@ -333,9 +282,84 @@ export default function LeftSidebar({
     setHoveredChat(null);
   }, []);
 
-  if (isCollapsed) {
+  // Handle sidebar hover for auto-hide functionality
+  const handleSidebarMouseEnter = useCallback(() => {
+    setIsHovered(true);
+  }, []);
+
+  const handleSidebarMouseLeave = useCallback(() => {
+    setIsHovered(false);
+  }, []);
+
+  // Determine if sidebar should be shown (expanded)
+  const shouldShowExpanded = !autoCollapsed || isHovered || !isCollapsed;
+
+  // Auto-hide collapsed state
+  if (autoCollapsed && !isHovered) {
     return (
-      <div className={cn("w-12 border-r border-border bg-card flex flex-col", className)}>
+      <div 
+        className={cn("w-14 hover:w-16 border-r border-primary/30 bg-gradient-to-b from-primary/10 to-primary/5 flex flex-col transition-all duration-300 group relative", className)}
+        onMouseEnter={handleSidebarMouseEnter}
+        onMouseLeave={handleSidebarMouseLeave}
+      >
+        {/* Sidebar hint icons */}
+        <div className="w-full h-full flex flex-col items-center py-4 space-y-4 relative">
+          {/* AVAI Logo/Brand */}
+          <div className="flex flex-col items-center space-y-2 group-hover:scale-110 transition-transform duration-300">
+            <Shield className="w-6 h-6 text-primary" />
+            <div className="text-[10px] text-primary font-bold tracking-wide opacity-90 group-hover:opacity-100">AVAI</div>
+          </div>
+          
+          {/* New Chat Hint */}
+          <div 
+            className="flex flex-col items-center space-y-1 opacity-80 group-hover:opacity-100 transition-all duration-300 cursor-pointer hover:scale-110" 
+            title="New Security Audit"
+          >
+            <Plus className="w-4 h-4 text-primary" />
+            <div className="text-[9px] text-primary font-medium text-center leading-tight">NEW<br />AUDIT</div>
+          </div>
+          
+          {/* Chat History Hint */}
+          <div 
+            className="flex flex-col items-center space-y-1 opacity-80 group-hover:opacity-100 transition-all duration-300 cursor-pointer hover:scale-110" 
+            title="Recent Audits"
+          >
+            <History className="w-4 h-4 text-primary" />
+            <div className="text-[9px] text-primary font-medium text-center leading-tight">RECENT<br />AUDITS</div>
+          </div>
+          
+          {/* User Profile Hint */}
+          <div 
+            className="flex flex-col items-center space-y-1 opacity-80 group-hover:opacity-100 transition-all duration-300 cursor-pointer hover:scale-110 mt-auto" 
+            title="User Profile & Settings"
+          >
+            <div className="w-4 h-4 rounded-full bg-primary flex items-center justify-center">
+              <User className="w-2.5 h-2.5 text-white" />
+            </div>
+            <div className="text-[9px] text-primary font-medium text-center leading-tight">PROFILE</div>
+          </div>
+          
+          {/* Hover tooltip */}
+          <div className="absolute left-full top-4 ml-3 px-3 py-2 bg-slate-900/95 backdrop-blur-sm text-white text-xs rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-all duration-300 delay-500 whitespace-nowrap pointer-events-none z-50 border border-primary/20">
+            <div className="font-semibold mb-1.5 text-primary">Security Dashboard</div>
+            <div className="text-xs text-slate-200 mb-0.5">• New Security Audits</div>
+            <div className="text-xs text-slate-200 mb-0.5">• Chat History</div>
+            <div className="text-xs text-slate-200">• Profile & Settings</div>
+            {/* Tooltip arrow */}
+            <div className="absolute left-0 top-4 -ml-1 w-2 h-2 bg-slate-900/95 rotate-45 border-l border-b border-primary/20"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (isCollapsed && !shouldShowExpanded) {
+    return (
+      <div 
+        className={cn("w-12 border-r border-border bg-card flex flex-col transition-all duration-300", className)}
+        onMouseEnter={handleSidebarMouseEnter}
+        onMouseLeave={handleSidebarMouseLeave}
+      >
         {/* Collapsed header */}
         <div className="p-2 border-b border-border">
           <Button
@@ -370,21 +394,20 @@ export default function LeftSidebar({
           </Button>
         </div>
 
-        {/* Collapsed Authentication Section */}
+        {/* Authentication Section */}
         <div className="p-2 border-t border-border">
-          <SignedIn>
-            <CollapsedAuthenticatedSection onToggle={onToggle} />
-          </SignedIn>
-          <SignedOut>
-            <CollapsedUnauthenticatedSection onToggle={onToggle} />
-          </SignedOut>
+          <CollapsedAuthenticatedSection onToggle={onToggle} />
         </div>
       </div>
     );
   }
 
   return (
-    <div className={cn("w-80 border-r border-border bg-card flex flex-col", className)}>
+    <div 
+      className={cn("w-80 border-r border-border bg-card flex flex-col transition-all duration-300", className)}
+      onMouseEnter={handleSidebarMouseEnter}
+      onMouseLeave={handleSidebarMouseLeave}
+    >
       {/* Header */}
       <div className="p-4 border-b border-border/50">
         <div className="flex items-center justify-between mb-4">
@@ -522,12 +545,7 @@ export default function LeftSidebar({
 
       {/* Authentication Section - Fixed at Bottom */}
       <div className="flex-shrink-0 p-3 border-t border-border bg-card">
-        <SignedIn>
-          <AuthenticatedUserSection theme={theme} setTheme={setTheme} />
-        </SignedIn>
-        <SignedOut>
-          <UnauthenticatedSection />
-        </SignedOut>
+        <AuthenticatedUserSection theme={theme} setTheme={setTheme} />
       </div>
     </div>
   );

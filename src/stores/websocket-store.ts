@@ -78,46 +78,22 @@ export const useWebSocketStore = create<WebSocketState>((set, get) => {
   };
 
   const scheduleReconnect = () => {
-    const state = get();
-    if (state.reconnectAttempts >= state.maxReconnectAttempts) {
-      set({ 
-        lastError: `Failed to connect after ${state.maxReconnectAttempts} attempts`,
-        isConnecting: false 
-      });
-      return;
-    }
-
-    const delay = RECONNECT_INTERVALS[Math.min(state.reconnectAttempts, RECONNECT_INTERVALS.length - 1)];
-    
-    reconnectTimeout = setTimeout(() => {
-      console.log(`Reconnecting... Attempt ${state.reconnectAttempts + 1}`);
-      connect(WS_URL);
-    }, delay);
+    console.log('🔌 scheduleReconnect called (static mode - skipping)');
+    // Static mode - don't schedule reconnects
   };
 
   const connect = (url: string) => {
-    const state = get();
+    console.log('🔌 WebSocket connect() called (static mode - skipping connection)');
     
-    console.log('🔌 WebSocket connect() called with URL:', url);
-    console.log('🔌 Current state:', {
-      isConnected: state.isConnected,
-      isConnecting: state.isConnecting,
-      reconnectAttempts: state.reconnectAttempts,
-      circuitBreakerOpen: circuitBreakerOpen
+    // Static mode - don't attempt any connections
+    set({ 
+      isConnected: false,
+      isConnecting: false,
+      isOfflineMode: true,
+      appStillFunctional: true,
+      lastError: null
     });
-    
-    // Circuit breaker: Don't connect if too many failures
-    if (circuitBreakerOpen) {
-      console.log('🚫 Circuit breaker open - preventing connection attempts');
-      set({ lastError: 'Connection blocked - too many failures. Please wait 30 seconds.' });
-      return;
-    }
-    
-    // Don't connect if already connected or connecting
-    if (state.isConnected || state.isConnecting) {
-      console.log('WebSocket: Already connected or connecting, skipping');
-      return;
-    }
+    return;
     
     // Open circuit breaker if too many failed attempts
     if (state.reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
@@ -415,7 +391,7 @@ export const useWebSocketStore = create<WebSocketState>((set, get) => {
   };
 
   return {
-    // Initial state
+    // Initial state (static mode)
     ws: null,
     isConnected: false,
     isConnecting: false,
@@ -423,8 +399,8 @@ export const useWebSocketStore = create<WebSocketState>((set, get) => {
     reconnectAttempts: 0,
     maxReconnectAttempts: MAX_RECONNECT_ATTEMPTS,
     
-    // Graceful degradation state
-    isOfflineMode: false,
+    // Static mode - always offline but functional
+    isOfflineMode: true,
     appStillFunctional: true,
     
     // Message handling

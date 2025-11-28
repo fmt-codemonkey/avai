@@ -41,16 +41,8 @@ const ConnectionDot = ({ isConnected, reconnectAttempts }: ConnectionDotProps) =
 };
 
 const getConnectionText = (isConnected: boolean, reconnectAttempts: number) => {
-  if (isConnected && reconnectAttempts === 0) {
-    return null; // Hide when fully connected
-  } else if (isConnected && reconnectAttempts > 0) {
-    return "Connection restored";
-  } else if (reconnectAttempts > 3) {
-    return "Connection issues - Click to retry";
-  } else if (!isConnected) {
-    return "Reconnecting...";
-  }
-  return null;
+  // Static mode - always show offline/local mode
+  return null; // Hide connection indicator in static mode
 };
 
 export function SubtleConnectionIndicator() {

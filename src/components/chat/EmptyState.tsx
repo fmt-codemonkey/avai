@@ -1,124 +1,81 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { Github, Upload, Sparkles, CheckCircle, BookOpen } from "lucide-react";
+import { Github, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import Link from "next/link";
-import Image from "next/image";
 
 interface EmptyStateProps {
-  onStartAudit?: (url: string) => void;
+  onStartAudit?: (url: string, files?: File[]) => void;
   className?: string;
 }
 
 export function EmptyState({ className }: EmptyStateProps) {
-
-
-
   return (
     <div className={cn(
-      "w-full h-full overflow-y-auto p-6 text-center relative",
+      "w-full flex flex-col items-center justify-center p-6 text-center relative", 
       className
     )}>
-      {/* Background Elements */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5 pointer-events-none" />
+      {/* Minimal Background Effects */}
+      <div className="absolute inset-0 bg-gradient-to-br from-muted/5 via-transparent to-muted/5 pointer-events-none" />
       
-      <div className="max-w-4xl mx-auto space-y-8 relative z-10 py-8">
-        {/* Logo and Title */}
-        <div className="space-y-4">
-          <div className="flex flex-col items-center gap-3">
-            <div className="relative">
-              <div className="w-16 h-16 bg-gradient-to-br from-primary via-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-xl overflow-hidden">
-                <Image
-                  src="/avai-logo.png"
-                  alt="AVAI Logo"
-                  width={32}
-                  height={32}
-                  className="object-contain"
-                />
+      {/* Detached Shield Icon */}
+      <div className="absolute -top-60 left-1/2 transform -translate-x-1/2 z-20">
+        <div className="relative">
+          <div className="absolute -inset-8 bg-primary/20 blur-3xl rounded-full"></div>
+          <svg 
+            className="w-32 h-32 md:w-40 md:h-40 text-primary animate-pulse relative z-10" 
+            fill="currentColor" 
+            viewBox="0 0 24 24"
+            style={{
+              filter: 'drop-shadow(0 0 30px rgba(0, 102, 255, 0.6))'
+            }}
+          >
+            <path d="M12,1L3,5V11C3,16.55 6.84,21.74 12,23C17.16,21.74 21,16.55 21,11V5L12,1M12,7C13.4,7 14.8,8.6 14.8,10V11.5C15.4,11.5 16,12.1 16,12.7V16.2C16,16.8 15.4,17.3 14.8,17.3H9.2C8.6,17.3 8,16.8 8,16.2V12.8C8,12.2 8.6,11.6 9.2,11.6V10.1C9.2,8.6 10.6,7 12,7M12,8.2C11.2,8.2 10.5,8.7 10.5,9.5V11.5H13.6V9.5C13.6,8.7 12.8,8.2 12,8.2Z" />
+          </svg>
+        </div>
+      </div>
+
+      <div className="max-w-4xl space-y-8 relative z-10">
+        {/* Main Content - Perfectly Centered */}
+        <div className="space-y-8 flex flex-col items-center justify-center">
+            {/* Main Title with Sequential Blinking Effect */}
+            <div className="space-y-4">
+              <h2 className="text-3xl md:text-5xl font-black text-center tracking-tight">
+                <span className="text-primary animate-pulse" style={{ animationDelay: '0s' }}>AI-POWERED </span>
+                <span className="text-primary animate-pulse" style={{ animationDelay: '0.5s' }}>SECURITY </span>
+                <span className="text-primary animate-pulse" style={{ animationDelay: '1s' }}>AUDITING</span>
+              </h2>
+              
+              {/* Subtitle with Matrix Effect */}
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-green-500/10 to-transparent animate-pulse"></div>
+                <p className="text-sm md:text-base text-green-400 font-mono text-center max-w-3xl mx-auto relative z-10 opacity-80">
+                  &gt; START A CONVERSATION WITH OUR AI SECURITY EXPERT AND PROTECT YOUR CODE IN MINUTES
+                  <span className="animate-pulse">_</span>
+                </p>
               </div>
-              <Sparkles className="w-4 h-4 text-yellow-400 absolute -top-1 -right-1" />
-            </div>
-            
-            <div className="space-y-2">
-              <div className="flex items-center justify-center gap-2">
-                <h1 className="text-5xl font-black bg-gradient-to-r from-primary via-blue-500 to-purple-600 bg-clip-text text-transparent">
-                  AVAI
-                </h1>
-                <Badge variant="secondary" className="text-xs bg-primary/10 text-primary border-primary/20">
-                  AI Powered
-                </Badge>
+
+              {/* Action Button */}
+              <div className="flex justify-center pt-8">
+                <Button
+                  onClick={() => window.open('https://calendly.com/ashishregmi2017/30min', '_blank')}
+                  className="group bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 hover:scale-105 flex items-center gap-2 border-0 shadow-lg hover:shadow-xl"
+                  size="lg"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  Book a Trial
+                  <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </Button>
               </div>
-              <div className="text-sm text-primary/80 uppercase tracking-[0.2em] font-semibold">
-                Security Platform
-              </div>
+
             </div>
-          </div>
-          
-          <div className="space-y-3">
-            <h2 className="text-2xl font-bold text-foreground">
-              AI-Powered Security Auditing
-            </h2>
-            <p className="text-muted-foreground">
-              Start a conversation with our AI security expert and protect your code in minutes
-            </p>
-            
-            {/* Quick Start Hint */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-muted text-sm text-muted-foreground">
-              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-              Try: &ldquo;Analyze my React app for vulnerabilities&rdquo;
-            </div>
-          </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Button 
-              size="lg" 
-              className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 shadow-lg"
-            >
-              <Github className="w-5 h-5 mr-2" />
-              Audit GitHub Repository
-            </Button>
-            
-            <Button 
-              size="lg" 
-              variant="outline"
-              className="border-primary/30 hover:bg-primary/10 text-primary"
-            >
-              <Upload className="w-5 h-5 mr-2" />
-              Upload Code Files
-            </Button>
-          </div>
-          
-          {/* How to Use Guide Button */}
-          <div className="flex justify-center">
-            <Link href="/how-to-use">
-              <Button 
-                size="lg" 
-                variant="ghost"
-                className="text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
-              >
-                <BookOpen className="w-5 h-5 mr-2" />
-                How to Use AVAI Platform
-              </Button>
-            </Link>
-          </div>
-          
-          {/* Trust Indicators */}
-          <div className="flex items-center justify-center gap-6 text-xs text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <CheckCircle className="w-3 h-3 text-emerald-500" />
-              SOC 2 Compliant
-            </div>
-            <div className="flex items-center gap-1">
-              <CheckCircle className="w-3 h-3 text-emerald-500" />
-              Enterprise Ready
-            </div>
-          </div>
-        </div>
+
       </div>
     </div>
   );

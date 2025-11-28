@@ -10,7 +10,7 @@ import { SubtleConnectionIndicator } from "@/components/chat/SubtleConnectionInd
 
 interface ChatContainerProps {
   messages?: Message[];
-  onSendMessage?: (content: string) => void;
+  onSendMessage?: (content: string, files?: File[]) => void;
   isLoading?: boolean;
   isEmpty?: boolean;
   className?: string;
@@ -18,6 +18,8 @@ interface ChatContainerProps {
   currentThinkingStep?: string;
   onRetryConnection?: () => void;
   showBookNowOverlay?: boolean; // New prop to control overlay
+  onCloseOverlay?: () => void; // Callback for overlay close
+  onRequestDemo?: () => void; // Demo request handler
 }
 
 interface Message {
@@ -40,7 +42,7 @@ interface Message {
 // Book Now Overlay Component
 const BookNowOverlay = ({ onClose }: { onClose?: () => void }) => {
   return (
-    <div className="absolute inset-0 bg-background/95 backdrop-blur-md flex items-center justify-center z-50 p-4" style={{ backgroundColor: 'rgba(10, 10, 11, 0.95)' }}>
+    <div className="fixed inset-0 bg-background/95 backdrop-blur-md flex items-center justify-center z-[60] p-4" style={{ backgroundColor: 'rgba(10, 10, 11, 0.95)' }}>
       <div className="bg-card border border-muted rounded-lg p-6 shadow-2xl max-w-md w-full relative" style={{ backgroundColor: 'rgba(26, 26, 29, 0.95)', borderColor: 'rgba(45, 45, 48, 0.8)' }}>
         {/* Close Button */}
         {onClose && (
@@ -63,10 +65,10 @@ const BookNowOverlay = ({ onClose }: { onClose?: () => void }) => {
               </svg>
             </div>
             <h3 className="text-lg font-semibold mb-2" style={{ color: '#FFFFFF' }}>
-              Ready for a Demo?
+              Ready for a Survey?
             </h3>
             <p className="text-sm" style={{ color: '#A0A0A3' }}>
-              Schedule a personalized demo with our security experts to see AVAI in action and protect your code today.
+            Take a short survey to help us improve our security audits.
             </p>
           </div>
           
@@ -92,7 +94,7 @@ const BookNowOverlay = ({ onClose }: { onClose?: () => void }) => {
             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
-            Book Now
+            Link to Survey
           </Link>
         </div>
       </div>
@@ -109,7 +111,9 @@ export function ChatContainer({
   isHistoricalLoad = false,
   currentThinkingStep,
   onRetryConnection,
-  showBookNowOverlay = true, // Default to true since backend is not running
+  showBookNowOverlay = false, // Default to false to allow normal chat interaction
+  onCloseOverlay,
+  onRequestDemo,
 }: ChatContainerProps) {
   // State to control overlay visibility
   const [isOverlayVisible, setIsOverlayVisible] = useState(showBookNowOverlay);
@@ -122,7 +126,8 @@ export function ChatContainer({
   // Handle overlay close
   const handleCloseOverlay = useCallback(() => {
     setIsOverlayVisible(false);
-  }, []);
+    onCloseOverlay?.(); // Call parent callback
+  }, [onCloseOverlay]);
   // Use messages directly from parent (single source of truth)
   const allMessages = messages;
 
@@ -135,7 +140,7 @@ export function ChatContainer({
   }, [isEmpty]);
 
   // Simplified message sending - delegate to parent
-  const handleSendMessage = useCallback((content: string) => {
+  const handleSendMessage = useCallback((content: string, files?: File[]) => {
     if (!content.trim()) return;
 
     // Optional: Play subtle send sound for better UX
@@ -163,45 +168,48 @@ export function ChatContainer({
 
     // Delegate all message handling to parent
     if (onSendMessage) {
-      onSendMessage(content.trim());
+      onSendMessage(content.trim(), files);
     }
   }, [onSendMessage]);
 
   return (
     <div className={cn(
-      "flex flex-col h-full w-full relative",
+      "flex flex-col h-full w-full",
       className
     )}>
-      {/* Subtle connection indicator (only shown during issues) */}
+      {/* Connection status indicator at the top */}
       <SubtleConnectionIndicator />
       
-      {/* Chat Messages Area - Fixed height with proper scrolling */}
-      <div className="flex-1 overflow-hidden">
-        {isEmpty ? (
-          <div className="h-full overflow-y-auto scrollbar-gutter-stable">
-            <EmptyState onStartAudit={handleSendMessage} />
-          </div>
-        ) : (
-          <div className="h-full overflow-y-auto scrollbar-gutter-stable">
-            <MessageList 
-              messages={allMessages} 
+      {/* Main content area */}
+      <div className="flex-1 flex flex-col min-h-0 p-4">
+        <div className="w-full max-w-4xl mx-auto flex flex-col h-full">
+          {/* Messages or Empty State */}
+          {isEmpty ? (
+            <div className="flex-1 flex items-center justify-center">
+              <EmptyState onStartAudit={handleSendMessage} onRequestDemo={onRequestDemo} />
+            </div>
+          ) : (
+            <div className="flex-1 min-h-0">
+              <MessageList 
+                messages={allMessages} 
+                isLoading={isLoading}
+                isHistoricalLoad={isHistoricalLoad}
+                onRetryConnection={onRetryConnection}
+                currentThinkingStep={currentThinkingStep}
+              />
+            </div>
+          )}
+          
+          {/* Chat Input at bottom */}
+          <div className="flex-shrink-0 w-full max-w-3xl mx-auto mt-4">
+            <ChatInput 
+              onSubmit={handleSendMessage}
               isLoading={isLoading}
-              isHistoricalLoad={isHistoricalLoad}
-              onRetryConnection={onRetryConnection}
-              currentThinkingStep={currentThinkingStep}
+              disabled={false}
+              placeholder={getInputPlaceholder()}
             />
           </div>
-        )}
-      </div>
-
-      {/* Enhanced Chat Input with WebSocket status */}
-      <div className="flex-shrink-0 relative">
-        <ChatInput 
-          onSubmit={handleSendMessage}
-          isLoading={isLoading}
-          disabled={false}
-          placeholder={getInputPlaceholder()}
-        />
+        </div>
       </div>
 
       {/* Book Now Overlay - shown when backend is unavailable */}

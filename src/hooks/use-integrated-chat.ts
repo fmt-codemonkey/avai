@@ -66,48 +66,20 @@ export function useIntegratedChat() {
     }
   }, [sessions, setCurrentSession, clearRealtimeMessages, loadMessages]);
 
-  // Send a message (handles both real-time and persistence)
+  // Send a message (static mode - no external connections)
   const sendMessage = useCallback(async (content: string) => {
     if (!content.trim()) return false;
 
     setIsProcessing(true);
 
     try {
-      // 1. Ensure we have a session
-      let session = currentSession;
-      if (!session && isAuthenticated) {
-        session = await createSession();
-        if (!session) {
-          console.error('Failed to create session');
-          return false;
-        }
-      }
+      console.log('🔄 Sending message in static mode:', content);
 
-      // 2. Add user message to real-time state immediately
+      // Add user message to real-time state immediately (this triggers static response)
       addRealtimeUserMessage(content);
 
-      // 3. Save user message to Supabase (if authenticated)
-      if (session && isAuthenticated) {
-        console.log('💾 Saving user message to Supabase:', { sessionId: session.id, content });
-        await saveMessage(content, 'user');
-        
-        // Auto-generate session title from first message (check title instead of message count)
-        if (session.title === 'New Chat') {
-          const title = content.length > 30 
-            ? content.substring(0, 30) + '...' 
-            : content;
-          await updateSessionTitle(session.id, title);
-          console.log('📝 Updated session title:', title);
-        }
-      }
-
-      // 4. Send to WebSocket for AI processing
-      const success = await sendAnalysisRequest(content);
-      
-      if (!success) {
-        console.error('Failed to send message via WebSocket');
-        return false;
-      }
+      console.log('✅ Message sent successfully (static mode)');
+      return true;
 
       return true;
     } catch (error) {
@@ -126,58 +98,12 @@ export function useIntegratedChat() {
     sendAnalysisRequest
   ]);
 
-  // Auto-save AI responses to Supabase when they arrive via WebSocket
-  useEffect(() => {
-    if (!currentSession || !isAuthenticated) return;
+  // Static mode - no auto-save to Supabase needed
 
-    // Check for new AI messages in real-time messages
-    const newAIMessages = realtimeMessages.filter(
-      msg => msg.sender === 'ai' && !processedAIMessages.current.has(msg.id)
-    );
-
-    // Save new AI messages to Supabase
-    newAIMessages.forEach(async (msg) => {
-      processedAIMessages.current.add(msg.id);
-      console.log('🔄 Auto-saving AI response to Supabase:', msg.content);
-      try {
-        await saveMessage(msg.content.toString(), 'ai');
-      } catch (error) {
-        console.error('Failed to save AI response to Supabase:', error);
-      }
-    });
-
-  }, [realtimeMessages, currentSession, isAuthenticated, saveMessage]);
-
-  // Get combined messages (persisted + real-time) - memoized to prevent infinite re-renders
+  // Static mode - only use real-time messages
   const allMessages = useMemo(() => {
-    if (!isAuthenticated) {
-      // For anonymous users, only show real-time messages
-      return realtimeMessages;
-    }
-
-    // For authenticated users, combine persisted and real-time
-    const persistedSet = new Set(persistedMessages.map((m: any) => `${m.content}_${m.sender}`));
-    const newRealtimeMessages = realtimeMessages.filter(m => 
-      !persistedSet.has(`${m.content}_${m.sender}`)
-    );
-
-    return [
-      ...persistedMessages.map((m: any) => ({
-        id: m.id.toString(),
-        content: m.content,
-        sender: m.sender as 'user' | 'ai',
-        timestamp: m.created_at,
-        type: 'text' as const,
-      })),
-      ...newRealtimeMessages.map(m => ({
-        ...m,
-      }))
-    ].sort((a, b) => {
-      const timestampA = typeof a.timestamp === 'string' ? new Date(a.timestamp).getTime() : a.timestamp;
-      const timestampB = typeof b.timestamp === 'string' ? new Date(b.timestamp).getTime() : b.timestamp;
-      return timestampA - timestampB;
-    });
-  }, [isAuthenticated, persistedMessages, realtimeMessages]);
+    return realtimeMessages;
+  }, [realtimeMessages]);
 
   // Save AI response when it arrives (triggered by real-time messages hook)
   const handleAIResponse = useCallback(async (response: string) => {
@@ -210,5 +136,6 @@ export function useIntegratedChat() {
     // Actions
     handleRetryConnection,
     handleAIResponse,
+    clearMessages: clearRealtimeMessages, // Expose clear function for static mode
   };
 }

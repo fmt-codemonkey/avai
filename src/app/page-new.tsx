@@ -6,8 +6,10 @@ import { RightSidebar } from "@/components/layout/RightSidebar";
 import { ChatContainer, type Message } from "@/components/chat/ChatContainer";
 import { ProgressCard } from "@/components/security/ProgressCard";
 import { VulnerabilityCard } from "@/components/security/VulnerabilityCard";
+import { useUser } from "@clerk/nextjs";
 
 export default function AVAISinglePage() {
+  const { isSignedIn } = useUser();
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [leftSidebarCollapsed, setLeftSidebarCollapsed] = useState(false);
@@ -159,14 +161,16 @@ export default function AVAISinglePage() {
 
   return (
     <div className="h-screen flex bg-background text-foreground">
-      {/* Left Sidebar - Chat History (Claude.ai style) */}
-      <LeftSidebar
-        isCollapsed={leftSidebarCollapsed}
-        onToggle={() => setLeftSidebarCollapsed(!leftSidebarCollapsed)}
-        onNewChat={handleNewChat}
-        onSelectChat={handleSelectChat}
-        currentChatId={currentChatId || undefined}
-      />
+      {/* Left Sidebar - Only show when signed in */}
+      {isSignedIn && (
+        <LeftSidebar
+          isCollapsed={leftSidebarCollapsed}
+          onToggle={() => setLeftSidebarCollapsed(!leftSidebarCollapsed)}
+          onNewChat={handleNewChat}
+          onSelectChat={handleSelectChat}
+          currentChatId={currentChatId || undefined}
+        />
+      )}
 
       {/* Main Chat Area - Center Column */}
       <div className="flex-1 flex flex-col min-w-0">
